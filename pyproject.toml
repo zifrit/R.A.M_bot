@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "r-a-m"
+version = "0.1.0"
+description = ""
+authors = ["zifrit <zifrit@list.ru>"]
+readme = "README.md"
+packages = [{include = "r"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
