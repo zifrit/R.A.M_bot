@@ -6,7 +6,7 @@ from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from config.settings import BOT_TOKEN
-from handlers import router
+from handlers.start import router
 
 
 async def main():
