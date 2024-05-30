@@ -8,9 +8,9 @@ class User(Base):
     __tablename__ = "users"
     username: Mapped[str] = mapped_column(String(255))
     tg_id: Mapped[int] = mapped_column(String(255), unique=True)
-    is_student: Mapped[bool]
-    profile_student: Mapped["ProfileTeacher"] = relationship(back_populates="user")
-    is_teacher: Mapped[bool]
+    is_student: Mapped[bool] = mapped_column(default=False)
+    profile_student: Mapped["ProfileStudent"] = relationship(back_populates="user")
+    is_teacher: Mapped[bool] = mapped_column(default=False)
     profile_teacher: Mapped["ProfileTeacher"] = relationship(back_populates="user")
 
 
