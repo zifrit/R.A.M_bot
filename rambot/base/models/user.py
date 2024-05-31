@@ -14,6 +14,18 @@ class User(Base):
     profile_teacher: Mapped["ProfileTeacher"] = relationship(back_populates="user")
 
 
+association_student_teacher_table = Table(
+    "association_student_teacher",
+    Base.metadata,
+    Column("id", Integer, primary_key=True),
+    Column("profiles_student_id", ForeignKey("profiles_student.id"), nullable=False),
+    Column("profiles_teacher_id", ForeignKey("profiles_teacher.id"), nullable=False),
+    UniqueConstraint(
+        "profiles_student_id", "profiles_teacher_id", name="idx_unique_student_teacher"
+    ),
+)
+
+
 class ProfileTeacher(Base):
     __tablename__ = "profiles_teacher"
     user_id: Mapped[int] = mapped_column(
@@ -24,6 +36,10 @@ class ProfileTeacher(Base):
     last_name: Mapped[str] = mapped_column(String(255))
     middle_name: Mapped[str | None] = mapped_column(String(255))
     user: Mapped["User"] = relationship(back_populates="profile_teacher")
+    students: Mapped[list["ProfileStudent"]] = relationship(
+        secondary=association_student_teacher_table,
+        back_populates="teachers",
+    )
 
 
 class ProfileStudent(Base):
@@ -36,15 +52,7 @@ class ProfileStudent(Base):
     last_name: Mapped[str] = mapped_column(String(255))
     middle_name: Mapped[str | None] = mapped_column(String(255))
     user: Mapped["User"] = relationship(back_populates="profile_student")
-
-
-association_student_teacher_table = Table(
-    "association_student_teacher",
-    Base.metadata,
-    Column("id", Integer, primary_key=True),
-    Column("profiles_student_id", ForeignKey("profiles_student.id"), nullable=False),
-    Column("profiles_teacher_id", ForeignKey("profiles_teacher.id"), nullable=False),
-    UniqueConstraint(
-        "profiles_student_id", "profiles_teacher_id", name="idx_unique_student_teacher"
-    ),
-)
+    teachers: Mapped[list["ProfileTeacher"]] = relationship(
+        secondary=association_student_teacher_table,
+        back_populates="students",
+    )
