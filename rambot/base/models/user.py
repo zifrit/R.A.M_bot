@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from sqlalchemy import String, ForeignKey, Table, Column, Integer, UniqueConstraint
 
 from base.models import Base
+
+if TYPE_CHECKING:
+    from base.models.lessons import CompletedLesson, CompletedTasks, Lesson
 
 
 class User(Base):
@@ -36,9 +41,14 @@ class ProfileTeacher(Base):
     last_name: Mapped[str] = mapped_column(String(255))
     middle_name: Mapped[str | None] = mapped_column(String(255))
     user: Mapped["User"] = relationship(back_populates="profile_teacher")
+
     students: Mapped[list["ProfileStudent"]] = relationship(
         secondary=association_student_teacher_table,
         back_populates="teachers",
+    )
+    lessons: Mapped["Lesson"] = relationship(back_populates="teacher")
+    completed_lessons: Mapped["CompletedLesson"] = relationship(
+        back_populates="teacher"
     )
 
 
@@ -52,7 +62,12 @@ class ProfileStudent(Base):
     last_name: Mapped[str] = mapped_column(String(255))
     middle_name: Mapped[str | None] = mapped_column(String(255))
     user: Mapped["User"] = relationship(back_populates="profile_student")
+
     teachers: Mapped[list["ProfileTeacher"]] = relationship(
         secondary=association_student_teacher_table,
         back_populates="students",
     )
+    completed_lessons: Mapped["CompletedLesson"] = relationship(
+        back_populates="student"
+    )
+    completed_tasks: Mapped["CompletedTasks"] = relationship(back_populates="student")
