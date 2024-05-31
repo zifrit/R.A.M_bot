@@ -40,8 +40,10 @@ class ProfileTeacher(Base):
     first_name: Mapped[str] = mapped_column(String(255))
     last_name: Mapped[str] = mapped_column(String(255))
     middle_name: Mapped[str | None] = mapped_column(String(255))
-    user: Mapped["User"] = relationship(back_populates="profile_teacher")
+    bio: Mapped[str | None] = mapped_column(String(255))
+    image: Mapped[str | None] = mapped_column(String(255))
 
+    user: Mapped["User"] = relationship(back_populates="profile_teacher")
     students: Mapped[list["ProfileStudent"]] = relationship(
         secondary=association_student_teacher_table,
         back_populates="teachers",
@@ -61,8 +63,8 @@ class ProfileStudent(Base):
     first_name: Mapped[str] = mapped_column(String(255))
     last_name: Mapped[str] = mapped_column(String(255))
     middle_name: Mapped[str | None] = mapped_column(String(255))
-    user: Mapped["User"] = relationship(back_populates="profile_student")
 
+    user: Mapped["User"] = relationship(back_populates="profile_student")
     teachers: Mapped[list["ProfileTeacher"]] = relationship(
         secondary=association_student_teacher_table,
         back_populates="students",
