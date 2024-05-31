@@ -15,7 +15,7 @@ class Tasks(Base):
     task_type_id: Mapped[int] = mapped_column(ForeignKey("task_types.id"))
     lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id"))
     text: Mapped[str] = mapped_column(TEXT())
-    answer: Mapped[list] = mapped_column(JSON())
+    answer: Mapped[list | None] = mapped_column(JSON())
     task_types: Mapped["TasksTypes"] = relationship(back_populates="tasks")
     lessons: Mapped["Lesson"] = relationship(back_populates="tasks")
 
