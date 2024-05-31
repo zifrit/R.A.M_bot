@@ -35,7 +35,7 @@ class Tasks(Base):
     __tablename__ = "tasks"
     task_type_id: Mapped[int] = mapped_column(ForeignKey("task_types.id"))
     lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id"))
-    text: Mapped[str] = mapped_column(TEXT())
+    question: Mapped[str] = mapped_column(TEXT())
     answer: Mapped[list | None] = mapped_column(JSON())
 
     task_types: Mapped["TasksTypes"] = relationship(back_populates="tasks")
@@ -47,7 +47,7 @@ class CompletedTasks(Base):
     task_type_id: Mapped[int] = mapped_column(ForeignKey("task_types.id"))
     lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id"))
     student_id: Mapped[int] = mapped_column(ForeignKey("profiles_student.id"))
-    text: Mapped[str] = mapped_column(TEXT())
+    question: Mapped[str] = mapped_column(TEXT())
     answer: Mapped[list | None] = mapped_column(JSON())
     system_verify: Mapped[bool] = mapped_column(default=False)
     teacher_verify: Mapped[bool] = mapped_column(default=False)
