@@ -1,13 +1,25 @@
 from aiogram import types, F, Router
 from aiogram.types import Message
-from aiogram.filters import Command
+
+from base.db import session_factory
+from services.crud.users import create_users, get_user_by_tg_id
 
 router = Router()
 
 
-@router.message(Command("start"))
+@router.message(F.text == "/start")
 async def start_handler(msg: Message):
-    await msg.answer("Привет! Я помогу тебе узнать твой ID, просто отправь мне любое сообщение")
+    async with session_factory() as session:
+        user = await get_user_by_tg_id(session=session, tg_id=msg.from_user.id)
+        if user:
+            pass
+        else:
+            await create_users(
+                session=session,
+                username=msg.from_user.username,
+                tg_id=msg.from_user.id,
+            )
+    await msg.answer("Привет")
 
 
 @router.message()
