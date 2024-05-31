@@ -12,7 +12,6 @@ async def create_users(
     user = User(username=username, tg_id=tg_id)
     session.add(user)
     await session.commit()
-    await session.refresh(user)
 
 
 async def get_user_by_tg_id(

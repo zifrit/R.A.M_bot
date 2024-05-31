@@ -17,7 +17,7 @@ class Tasks(Base):
     text: Mapped[str] = mapped_column(TEXT())
     answer: Mapped[list] = mapped_column(JSON())
     task_types: Mapped["TasksTypes"] = relationship(back_populates="tasks")
-    lessons: Mapped["TasksTypes"] = relationship(back_populates="tasks")
+    lessons: Mapped["Lesson"] = relationship(back_populates="tasks")
 
 
 class TasksTypes(Base):
