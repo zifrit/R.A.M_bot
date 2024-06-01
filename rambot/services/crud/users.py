@@ -9,10 +9,11 @@ async def create_users(
     session: AsyncSession,
     username: str,
     tg_id: int,
-) -> None:
+) -> User:
     user = User(username=username, tg_id=tg_id)
     session.add(user)
     await session.commit()
+    return user
 
 
 async def get_user_by_tg_id(
@@ -40,6 +41,7 @@ async def create_profile_teacher(
         image=image,
         bio=bio,
     )
+    setattr(user, "is_teacher", True)
     session.add(teacher)
     await session.commit()
 

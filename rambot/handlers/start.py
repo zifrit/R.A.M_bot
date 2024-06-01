@@ -22,15 +22,33 @@ async def start_handler(message: Message):
         if user:
             pass
         else:
-            await create_users(
+            user = await create_users(
                 session=session,
                 username=message.from_user.username,
                 tg_id=message.from_user.id,
             )
-    await message.answer(
-        "Это система помощи работы с учениками для преподавателей.\nВыберите способ регистрации вашего профиля ⬇️",
-        reply_markup=start.create_profiles,
-    )
+        if user.is_teacher and user.is_student:
+            await message.answer(
+                "Это система помощи работы с учениками для преподавателей.",
+            )
+        elif user.is_teacher:
+            await message.answer(
+                "Это система помощи работы с учениками для преподавателей."
+                "\nВыберите способ регистрации вашего профиля ⬇️",
+                reply_markup=start.create_profiles_student_inline,
+            )
+        elif user.is_student:
+            await message.answer(
+                "Это система помощи работы с учениками для преподавателей."
+                "\nВыберите способ регистрации вашего профиля ⬇️",
+                reply_markup=start.create_profile_teacher_inline,
+            )
+        else:
+            await message.answer(
+                "Это система помощи работы с учениками для преподавателей."
+                "\nВыберите способ регистрации вашего профиля ⬇️",
+                reply_markup=start.create_profiles_inline,
+            )
 
 
 @router.message(F.text == "/about_my")
@@ -50,27 +68,32 @@ async def message_handler(message: Message):
             )
 
 
-@router.callback_query(F.data == "create_profiled_teacher")
+@router.callback_query(F.data.in_(["create_profiled_teacher", "disagree_fio"]))
 async def create_profiled_teacher(call: CallbackQuery):
     await call.message.edit_text(
-        "Данные для Фамилии и Имени брать из личного профиля ?", reply_markup=start.fio
+        "Данные для Фамилии и Имени брать из... ?", reply_markup=start.fio
     )
 
 
 @router.callback_query(F.data == "fio_from_account")
 async def create_profiled_teacher(call: CallbackQuery, state: FSMContext):
+    last_name = call.from_user.last_name
+    first_name = call.from_user.first_name
+    if not last_name:
+        last_name = "last_name (было взято last_name за отсутствием настоящего)"
+        await state.update_data(last_name=last_name)
+    if not first_name:
+        first_name = "first_name (было взято first_name за отсутствием настоящего)"
+        await state.update_data(first_name=first_name)
     await call.message.edit_text(
-        f"Были взяты ваши: \nФамилия - {call.from_user.last_name} \nИмя - {call.from_user.first_name}",
+        f"Были взяты ваши: \nФамилия - {last_name} \nИмя - {first_name}",
+        reply_markup=start.y_n_fio,
     )
-    await state.update_data(first_name=call.from_user.first_name)
-    await state.update_data(last_name=call.from_user.last_name)
-    await call.message.answer("Отправьте фото для вашего профиля")
-    await state.set_state(CreateProfileTeacher.image)
 
 
 @router.callback_query(F.data == "get_fio_user")
 async def create_profiled_teacher(call: CallbackQuery, state: FSMContext):
-    await call.message.answer(
+    await call.message.edit_text(
         f"Через пробел отправьте ваши Фаилия и Имя",
     )
     await state.set_state(CreateProfileTeacher.FIO)
@@ -81,9 +104,17 @@ async def get_fio_user(message: Message, state: FSMContext):
     first_name, last_name = message.text.split(" ")
     await state.update_data(first_name=first_name)
     await state.update_data(last_name=last_name)
+    await message.answer(
+        f"Ваши: \nФамилия - {last_name} \nИмя - {first_name}",
+        reply_markup=start.y_n_fio,
+    )
 
+
+@router.callback_query(F.data == "agree_fio")
+async def set_fio_profile(call: CallbackQuery, state: FSMContext):
+    await call.message.edit_text("Ваши данные приняты")
+    await call.message.answer("Отправьте фото для вашего профиля")
     await state.set_state(CreateProfileTeacher.image)
-    await message.answer("Отправьте фото для вашего профиля")
 
 
 @router.message(~F.photo, CreateProfileTeacher.image)
