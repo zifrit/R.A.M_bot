@@ -1,16 +1,17 @@
 from aiogram.fsm.state import StatesGroup, State
 
 
-class CreateProfile(StatesGroup):
+class CreateProfileStudent(StatesGroup):
     FIO = State()
     first_name = State()
     last_name = State()
     middle_name = State()
 
 
-class CreateProfileStudent(CreateProfile): ...
-
-
-class CreateProfileTeacher(CreateProfile):
+class CreateProfileTeacher(StatesGroup):
+    FIO = State()
+    first_name = State()
+    last_name = State()
+    middle_name = State()
     bio = State()
     image = State()

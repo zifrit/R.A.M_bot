@@ -1,4 +1,5 @@
 from aiogram import F, Router
+from aiogram.enums import ChatAction
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
@@ -6,20 +7,21 @@ from base.db import session_factory
 from services.crud.users import (
     create_profile_teacher,
 )
-from buttons import start
+from buttons import create_profile
 from states.create_profiles import CreateProfileTeacher
 
 router = Router()
 
 
-@router.callback_query(F.data.in_(["create_profiled_teacher", "disagree_fio"]))
+@router.callback_query(F.data.in_(["create_profiled_teacher", "disagree_fio_teacher"]))
 async def create_profiled_teacher(call: CallbackQuery):
     await call.message.edit_text(
-        "Данные для Фамилии и Имени брать из... ?", reply_markup=start.fio
+        "Данные для Фамилии и Имени брать из... ?",
+        reply_markup=create_profile.fio_teacher,
     )
 
 
-@router.callback_query(F.data == "fio_from_account")
+@router.callback_query(F.data == "fio_from_account_teacher")
 async def create_profiled_teacher(call: CallbackQuery, state: FSMContext):
     last_name = call.from_user.last_name
     first_name = call.from_user.first_name
@@ -36,11 +38,11 @@ async def create_profiled_teacher(call: CallbackQuery, state: FSMContext):
         await state.update_data(first_name=first_name)
     await call.message.edit_text(
         f"Были взяты ваши: \nФамилия - {last_name} \nИмя - {first_name}",
-        reply_markup=start.y_n_fio,
+        reply_markup=create_profile.y_n_fio_teacher,
     )
 
 
-@router.callback_query(F.data == "get_fio_user")
+@router.callback_query(F.data == "get_fio_user_teacher")
 async def create_profiled_teacher(call: CallbackQuery, state: FSMContext):
     await call.message.edit_text(
         f"Через пробел отправьте ваши Фаилия и Имя",
@@ -55,11 +57,11 @@ async def get_fio_user(message: Message, state: FSMContext):
     await state.update_data(last_name=last_name)
     await message.answer(
         f"Ваши: \nФамилия - {last_name} \nИмя - {first_name}",
-        reply_markup=start.y_n_fio,
+        reply_markup=create_profile.y_n_fio_teacher,
     )
 
 
-@router.callback_query(F.data == "agree_fio")
+@router.callback_query(F.data == "agree_fio_teacher")
 async def set_fio_profile(call: CallbackQuery, state: FSMContext):
     await call.message.edit_text("Ваши данные приняты")
     await call.message.answer("Отправьте фото для вашего профиля")
@@ -84,6 +86,10 @@ async def get_image_user(message: Message, state: FSMContext):
 async def get_fio_user(message: Message, state: FSMContext):
     await state.update_data(bio=message.text)
     data = await state.get_data()
+    await message.bot.send_chat_action(
+        chat_id=message.chat.id,
+        action=ChatAction.TYPING,
+    )
     await message.answer_photo(
         photo=data["image"],
         caption=f"{data["first_name"]} {data["last_name"]} \n\n\n\n{data["bio"]}",
