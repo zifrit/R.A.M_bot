@@ -6,7 +6,12 @@ from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from config.settings import settings
-from handlers import start, create_profile_teacher, create_profile_student
+from handlers import (
+    start,
+    create_profile_teacher,
+    create_profile_student,
+    join_to_teacher,
+)
 
 
 async def main():
@@ -16,6 +21,7 @@ async def main():
         start.router,
         create_profile_teacher.router,
         create_profile_student.router,
+        join_to_teacher.router,
     )
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())

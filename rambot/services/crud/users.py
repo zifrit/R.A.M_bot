@@ -1,8 +1,12 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import Result
+from sqlalchemy.orm import joinedload, selectinload
+
 from base.models import User
 from base.models.user import ProfileTeacher, ProfileStudent
+from config.settings import encryption_settings
+from utils.tokens import decrypt_token
 
 
 async def create_users(
@@ -111,3 +115,28 @@ async def update_profile_student(
     student_.first_name = first_name
     await session.commit()
     return student_
+
+
+async def join_to_teacher(
+    session: AsyncSession,
+    token: str,
+    student_: ProfileStudent,
+):
+    key = encryption_settings.ENCRYPTION_TOKEN
+    data = decrypt_token(token=token, key=key)
+    if data == "Token invalid token":
+        return "Такой ключ не существует"
+    elif data == "Token has expired":
+        return "Ключ уже не работает"
+    else:
+        teacher_ = await session.scalar(
+            select(ProfileTeacher)
+            .options(selectinload(ProfileTeacher.students))
+            .where(ProfileTeacher.id == data["id"])
+        )
+        if student_ in teacher_.students:
+            return "Вы уже подписались на этого преподавателя"
+        else:
+            teacher_.students.append(student_)
+            await session.commit()
+            return "Вы подписались на преподавателя"

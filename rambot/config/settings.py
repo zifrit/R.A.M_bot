@@ -5,7 +5,12 @@ load_dotenv()
 
 
 class Settings(BaseSettings):
-    BOT_TOKEN: str = ''
+    BOT_TOKEN: str = ""
+
+
+class EncryptionSettings(BaseSettings):
+    ENCRYPTION_TOKEN: bytes
+    TTL_ENCRYPTION_TOKEN: int  # секунд
 
 
 class DB(BaseSettings):
@@ -29,3 +34,4 @@ class Postgres(BaseSettings):
 settings = Settings()
 postgres_settings = Postgres()
 db_settings = DB()
+encryption_settings = EncryptionSettings()

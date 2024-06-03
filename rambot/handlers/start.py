@@ -123,6 +123,6 @@ async def profiled_teacher(call: CallbackQuery):
             photo=teacher.image,
             caption=f"{teacher.first_name} {teacher.last_name} \n\n\n\n{teacher.bio}",
             reply_markup=create_profile.view_profile(
-                callback_data="re_register_teacher_profile"
+                callback_data="re_register_teacher_profile", is_teacher=True
             ),
         )
