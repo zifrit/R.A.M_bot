@@ -32,6 +32,7 @@ async def create_join_token(call: CallbackQuery):
 
 @router.message(F.text == "/join_to_teacher")
 async def get_join_to_teacher_token(message: Message, state: FSMContext):
+    await state.clear()
     await message.answer("Отправьте ключ присоединения полученный от преподавателя")
     await state.set_state(JoinToTeacher.join_token)
 

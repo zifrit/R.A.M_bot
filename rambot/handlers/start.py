@@ -1,4 +1,5 @@
 from aiogram import F, Router
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from base.db import session_factory
@@ -14,7 +15,8 @@ router = Router()
 
 
 @router.message(F.text == "/start")
-async def start_handler(message: Message):
+async def start_handler(message: Message, state: FSMContext):
+    await state.clear()
     async with session_factory() as session:
         user = await get_user_by_tg_id(session=session, tg_id=message.from_user.id)
         if user:
@@ -50,7 +52,8 @@ async def start_handler(message: Message):
 
 
 @router.message(F.text == "/about_my")
-async def profile(message: Message):
+async def profile(message: Message, state: FSMContext):
+    await state.clear()
     async with session_factory() as session:
         user = await get_user_by_tg_id(session=session, tg_id=message.from_user.id)
         if user.is_teacher and user.is_student:
