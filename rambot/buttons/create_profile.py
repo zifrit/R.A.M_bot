@@ -1,4 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 create_profiles_inline = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -65,12 +66,12 @@ fio_student = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             InlineKeyboardButton(
-                text="Из личного профиля _", callback_data="fio_from_account_student"
+                text="Из личного профиля", callback_data="fio_from_account_student"
             ),
         ],
         [
             InlineKeyboardButton(
-                text="Ввести самому _", callback_data="get_fio_user_student"
+                text="Ввести самому", callback_data="get_fio_user_student"
             ),
         ],
     ],
@@ -79,12 +80,22 @@ fio_student = InlineKeyboardMarkup(
 y_n_fio_student = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text="Принять_S", callback_data="agree_fio_student"),
+            InlineKeyboardButton(text="Принять", callback_data="agree_fio_student"),
         ],
         [
             InlineKeyboardButton(
-                text="Отклонить_S", callback_data="disagree_fio_student"
+                text="Отклонить", callback_data="disagree_fio_student"
             ),
         ],
     ],
 )
+
+
+def view_profile(callback_data):
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="Пересоздать профиль", callback_data=callback_data),
+        InlineKeyboardButton(text="Назад", callback_data="back_choice_profile"),
+        width=1,
+    )
+    return builder.as_markup()

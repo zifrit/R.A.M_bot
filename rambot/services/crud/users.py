@@ -32,7 +32,7 @@ async def create_profile_teacher(
     image: str,
     bio: str,
     tg_id: int,
-) -> None:
+) -> ProfileTeacher:
     user = await get_user_by_tg_id(session, tg_id)
     teacher = ProfileTeacher(
         user_id=user.id,
@@ -44,6 +44,7 @@ async def create_profile_teacher(
     setattr(user, "is_teacher", True)
     session.add(teacher)
     await session.commit()
+    return teacher
 
 
 async def create_profile_student(
@@ -51,16 +52,17 @@ async def create_profile_student(
     first_name: str,
     last_name: str,
     tg_id: int,
-) -> None:
+) -> ProfileStudent:
     user = await get_user_by_tg_id(session, tg_id)
-    teacher = ProfileStudent(
+    student = ProfileStudent(
         user_id=user.id,
         first_name=first_name,
         last_name=last_name,
     )
     setattr(user, "is_student", True)
-    session.add(teacher)
+    session.add(student)
     await session.commit()
+    return student
 
 
 async def get_teacher_by_tg_id(
@@ -76,8 +78,36 @@ async def get_teacher_by_tg_id(
 async def get_student_by_tg_id(
     session: AsyncSession,
     tg_id: int,
-) -> ProfileTeacher:
+) -> ProfileStudent:
     user = await get_user_by_tg_id(session, tg_id)
     stmt = select(ProfileStudent).where(ProfileStudent.user_id == user.id)
-    teacher = await session.scalar(stmt)
-    return teacher
+    student = await session.scalar(stmt)
+    return student
+
+
+async def update_profile_teacher(
+    session: AsyncSession,
+    first_name: str,
+    last_name: str,
+    image: str,
+    bio: str,
+    teacher_: ProfileTeacher,
+) -> ProfileTeacher:
+    teacher_.image = image
+    teacher_.bio = bio
+    teacher_.last_name = last_name
+    teacher_.first_name = first_name
+    await session.commit()
+    return teacher_
+
+
+async def update_profile_student(
+    session: AsyncSession,
+    first_name: str,
+    last_name: str,
+    student_: ProfileStudent,
+) -> ProfileStudent:
+    student_.last_name = last_name
+    student_.first_name = first_name
+    await session.commit()
+    return student_
