@@ -5,13 +5,10 @@ from aiogram.types import Message, CallbackQuery
 
 from base.db import session_factory
 from services.crud.users import (
-    create_users,
-    get_user_by_tg_id,
     get_student_by_tg_id,
     get_teacher_by_tg_id,
     join_to_teacher,
 )
-from buttons import create_profile, start
 from config.settings import encryption_settings
 from states.join_to_teacher import JoinToTeacher
 from utils.tokens import create_token
