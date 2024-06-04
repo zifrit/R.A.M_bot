@@ -1,12 +1,9 @@
-from sqlalchemy import select, func
+from sqlalchemy import select, func, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from base.models import User
 from base.models.lessons import Lesson
 from base.models.user import ProfileTeacher
-from config.settings import encryption_settings
-from utils.tokens import decrypt_token
 
 
 async def create_lesson(
@@ -61,5 +58,12 @@ async def get_teacher_lessons(
         .limit(limit)
         .offset(offset=(limit * (offset - 1)))
         .where(Lesson.teacher_id == teacher_.id)
+        .order_by(Lesson.created_at)
     )
     return list(teacher_lessons), await get_count_teacher_lessons(session, teacher_)
+
+
+async def delete_lesson_by_id(session: AsyncSession, id_lesson: int) -> None:
+    lesson = await get_lesson_by_id(session, id_lesson)
+    await session.delete(lesson)
+    await session.commit()

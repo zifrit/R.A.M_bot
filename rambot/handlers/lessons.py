@@ -12,11 +12,12 @@ from services.crud.lessons import (
     create_lesson,
     update_lesson,
     get_count_teacher_lessons,
+    delete_lesson_by_id,
     get_lesson_by_id,
     get_teacher_lessons,
 )
-from buttons import profiles, start, lessons as buttons_lessons, pagination
-from states.create_lessons_task import CreateLesson
+from buttons import profiles, start, lessons, pagination
+from states.create_lessons_task import UpdateLessonName, CreateLesson
 
 router = Router()
 
@@ -51,7 +52,7 @@ async def get_create_lesson_name(message: Message, state: FSMContext):
         await state.clear()
 
 
-@router.callback_query(F.data == "view_my_lessons")
+@router.callback_query(F.data.in_(["back_list_lessons", "view_my_lessons"]))
 async def view_lessons_teacher(call: CallbackQuery):
     async with session_factory() as session:
         teacher = await get_teacher_by_tg_id(session=session, tg_id=call.from_user.id)
@@ -64,15 +65,15 @@ async def view_lessons_teacher(call: CallbackQuery):
     if 0 < count_lessons <= 2:
         text = []
         for lesson in teacher_lessons:
-            text.append(f"""📝 {lesson.name}""")
+            text.append(f"""📝 {lesson.name}\n/info_lesson_{lesson.id}""")
         await call.message.delete()
         await call.message.answer(
-            text="\n".join(text), reply_markup=pagination.back_teacher_profile
+            text="\n\n".join(text), reply_markup=pagination.back_teacher_profile
         )
     elif count_lessons > 2:
         text = []
         for lesson in teacher_lessons:
-            text.append(f"""📝 {lesson.name}""")
+            text.append(f"""📝 {lesson.name}\n/info_lesson_{lesson.id}""")
         await call.message.delete()
         await call.message.answer(
             text="\n\n".join(text),
@@ -124,7 +125,7 @@ async def paginator_service(call: CallbackQuery, callback_data: pagination.Pagin
         )
     text = []
     for lesson in teacher_lessons:
-        text.append(f"""📝 {lesson.name}""")
+        text.append(f"""📝 {lesson.name}\n/info_lesson_{lesson.id}""")
     with suppress(TelegramBadRequest):
         if right and left:
             await call.message.edit_text(
@@ -157,3 +158,44 @@ async def paginator_service(call: CallbackQuery, callback_data: pagination.Pagin
                 ),
                 text="\n\n".join(text),
             )
+
+
+@router.message(F.text.startswith("/info_lesson"))
+async def info_lesson(message: Message):
+    id_lesson = int(message.text.split("_")[-1])
+    async with session_factory() as session:
+        lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
+        text = f"📝{lesson.name}\n✍🏻Количество преходящи / \n🥇Количество пройденных /"
+        await message.answer(
+            text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
+        )
+
+
+@router.callback_query(F.data.startswith("delete_lesson"))
+async def delete_lesson(call: CallbackQuery):
+    id_lesson = int(call.data.split("_")[-1])
+    async with session_factory() as session:
+        await delete_lesson_by_id(session=session, id_lesson=id_lesson)
+    await call.message.edit_text("Урок удален")
+
+
+@router.callback_query(F.data.startswith("update_lesson_name"))
+async def update_lesson_name(call: CallbackQuery, state: FSMContext):
+    id_lesson = int(call.data.split("_")[-1])
+    await call.message.edit_text("Введите новое название урока")
+    await state.update_data(id_lesson=id_lesson)
+    await state.set_state(UpdateLessonName.new_name)
+
+
+@router.message(UpdateLessonName.new_name)
+async def set_name_lesson(message: Message, state: FSMContext):
+    data = await state.get_data()
+    id_lesson = int(data["id_lesson"])
+    async with session_factory() as session:
+        await update_lesson(session=session, id_lesson=id_lesson, new_name=message.text)
+        lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
+        text = f"📝{lesson.name}\n✍🏻Количество преходящи / \n🥇Количество пройденных /"
+        await message.answer(
+            text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
+        )
+        await state.clear()
