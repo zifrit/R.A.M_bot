@@ -9,7 +9,7 @@ from services.crud.users import (
     get_student_by_tg_id,
     update_profile_student,
 )
-from buttons import create_profile
+from buttons import profiles
 from states.create_profiles import CreateProfileStudent
 
 router = Router()
@@ -27,7 +27,7 @@ router = Router()
 async def selected_create_profiled_student(call: CallbackQuery):
     await call.message.edit_text(
         "Данные для Фамилии и Имени брать из... ?",
-        reply_markup=create_profile.fio_student,
+        reply_markup=profiles.fio_student,
     )
 
 
@@ -50,7 +50,7 @@ async def get_fio_for_student_profile_from_account(
         await state.update_data(first_name=first_name)
     await call.message.edit_text(
         f"Были взяты ваши: \nФамилия - {last_name} \nИмя - {first_name}",
-        reply_markup=create_profile.y_n_fio_student,
+        reply_markup=profiles.y_n_fio_student,
     )
 
 
@@ -69,7 +69,7 @@ async def get_fio_user(message: Message, state: FSMContext):
     await state.update_data(last_name=last_name)
     await message.answer(
         f"Ваши: \nФамилия - {first_name} \nИмя - {last_name}",
-        reply_markup=create_profile.y_n_fio_student,
+        reply_markup=profiles.y_n_fio_student,
     )
 
 

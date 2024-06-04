@@ -9,7 +9,7 @@ from services.crud.users import (
     get_teacher_by_tg_id,
     update_profile_teacher,
 )
-from buttons import create_profile
+from buttons import profiles
 from states.create_profiles import CreateProfileTeacher
 
 router = Router()
@@ -26,7 +26,7 @@ router = Router()
 async def create_profiled_teacher(call: CallbackQuery):
     await call.message.edit_text(
         "Данные для Фамилии и Имени брать из... ?",
-        reply_markup=create_profile.fio_teacher,
+        reply_markup=profiles.fio_teacher,
     )
 
 
@@ -41,7 +41,7 @@ async def create_profiled_teacher(call: CallbackQuery):
     await call.message.delete()
     await call.message.answer(
         "Данные для Фамилии и Имени брать из... ?",
-        reply_markup=create_profile.fio_teacher,
+        reply_markup=profiles.fio_teacher,
     )
 
 
@@ -62,7 +62,7 @@ async def create_profiled_teacher(call: CallbackQuery, state: FSMContext):
         await state.update_data(first_name=first_name)
     await call.message.edit_text(
         f"Были взяты ваши: \nФамилия - {last_name} \nИмя - {first_name}",
-        reply_markup=create_profile.y_n_fio_teacher,
+        reply_markup=profiles.y_n_fio_teacher,
     )
 
 
@@ -81,7 +81,7 @@ async def get_fio_user(message: Message, state: FSMContext):
     await state.update_data(last_name=last_name)
     await message.answer(
         f"Ваши: \nФамилия - {first_name} \nИмя - {last_name}",
-        reply_markup=create_profile.y_n_fio_teacher,
+        reply_markup=profiles.y_n_fio_teacher,
     )
 
 
