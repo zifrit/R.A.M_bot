@@ -98,6 +98,8 @@ def view_profile(callback_data, is_teacher=False):
             InlineKeyboardButton(
                 text="Создать ключ", callback_data="create_join_token"
             ),
+            InlineKeyboardButton(text="Мои уроки", callback_data="view_my_lessons"),
+            width=1,
         )
     builder.row(
         InlineKeyboardButton(text="Пересоздать профиль", callback_data=callback_data),
