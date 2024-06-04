@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, types
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
@@ -11,7 +11,14 @@ from handlers import (
     create_profile_teacher,
     create_profile_student,
     join_to_teacher,
+    lessons,
 )
+
+commands = [
+    types.BotCommand(command="start", description="запуск бота"),
+    types.BotCommand(command="create_lesson", description="создать урок"),
+    types.BotCommand(command="profiles", description="Профили"),
+]
 
 
 async def main():
@@ -22,7 +29,9 @@ async def main():
         create_profile_teacher.router,
         create_profile_student.router,
         join_to_teacher.router,
+        lessons.router,
     )
+    await bot.set_my_commands(commands=commands)
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 

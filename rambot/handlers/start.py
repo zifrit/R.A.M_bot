@@ -9,7 +9,7 @@ from services.crud.users import (
     get_student_by_tg_id,
     get_teacher_by_tg_id,
 )
-from buttons import create_profile, start
+from buttons import profiles, start
 
 router = Router()
 
@@ -35,23 +35,23 @@ async def start_handler(message: Message, state: FSMContext):
             await message.answer(
                 "Это система помощи работы с учениками для преподавателей."
                 "\nВыберите способ регистрации вашего профиля ⬇️",
-                reply_markup=create_profile.create_profiles_student_inline,
+                reply_markup=profiles.create_profiles_student_inline,
             )
         elif user.is_student:
             await message.answer(
                 "Это система помощи работы с учениками для преподавателей."
                 "\nВыберите способ регистрации вашего профиля ⬇️",
-                reply_markup=create_profile.create_profile_teacher_inline,
+                reply_markup=profiles.create_profile_teacher_inline,
             )
         else:
             await message.answer(
                 "Это система помощи работы с учениками для преподавателей."
                 "\nВыберите способ регистрации вашего профиля ⬇️",
-                reply_markup=create_profile.create_profiles_inline,
+                reply_markup=profiles.create_profiles_inline,
             )
 
 
-@router.message(F.text == "/about_my")
+@router.message(F.text == "/profiles")
 async def profile(message: Message, state: FSMContext):
     await state.clear()
     async with session_factory() as session:
@@ -111,7 +111,7 @@ async def profiled_student(call: CallbackQuery):
         student = await get_student_by_tg_id(session=session, tg_id=call.from_user.id)
         await call.message.edit_text(
             text=f"{student.first_name} {student.last_name}",
-            reply_markup=create_profile.view_profile(
+            reply_markup=profiles.view_profile(
                 callback_data="re_register_student_profile"
             ),
         )
@@ -125,7 +125,7 @@ async def profiled_teacher(call: CallbackQuery):
         await call.message.answer_photo(
             photo=teacher.image,
             caption=f"{teacher.first_name} {teacher.last_name} \n\n\n\n{teacher.bio}",
-            reply_markup=create_profile.view_profile(
+            reply_markup=profiles.view_profile(
                 callback_data="re_register_teacher_profile", is_teacher=True
             ),
         )
