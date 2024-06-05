@@ -6,7 +6,7 @@ from sqlalchemy import String, ForeignKey, Table, Column, Integer, UniqueConstra
 from base.models import Base
 
 if TYPE_CHECKING:
-    from base.models.lessons import CompletedLesson, CompletedTasks, Lesson
+    from base.models.lessons import CompletedLesson, InProgressTasks, Lesson
 
 
 class User(Base):
@@ -72,4 +72,3 @@ class ProfileStudent(Base):
     completed_lessons: Mapped["CompletedLesson"] = relationship(
         back_populates="student"
     )
-    completed_tasks: Mapped["CompletedTasks"] = relationship(back_populates="student")
