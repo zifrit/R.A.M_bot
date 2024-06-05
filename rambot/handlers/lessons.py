@@ -165,7 +165,7 @@ async def info_lesson(message: Message):
     id_lesson = int(message.text.split("_")[-1])
     async with session_factory() as session:
         lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
-        text = f"📝{lesson.name}\n✍🏻Количество преходящи / \n🥇Количество пройденных /"
+        text = f"📝{lesson.name}\nКоличество задач / \n✍🏻Количество проходящих / \n🥇Количество пройденных /"
         await message.answer(
             text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
         )
@@ -194,7 +194,7 @@ async def set_name_lesson(message: Message, state: FSMContext):
     async with session_factory() as session:
         await update_lesson(session=session, id_lesson=id_lesson, new_name=message.text)
         lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
-        text = f"📝{lesson.name}\n✍🏻Количество преходящи / \n🥇Количество пройденных /"
+        text = f"📝{lesson.name}\nКоличество задач / \n✍🏻Количество проходящих / \n🥇Количество пройденных /"
         await message.answer(
             text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
         )
