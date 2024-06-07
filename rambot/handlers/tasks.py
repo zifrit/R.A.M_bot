@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from base.db import session_factory
-from services.crud.tasks import get_task_types, create_lessons_task
+from services.crud.tasks import get_task_types, create_lessons_task, get_last_task
 from buttons.tasks import task_types_inline, completed_tasks_inline
 from states.create_lessons_task import CreateLessonTask
 
@@ -15,6 +15,9 @@ async def add_task_to_lesson(call: CallbackQuery, state: FSMContext):
     id_lesson = int(call.data.split("_")[-1])
     await state.update_data(id_lesson=id_lesson)
     async with session_factory() as session:
+        last_task = await get_last_task(session=session, id_lesson=id_lesson)
+        if last_task:
+            await state.update_data(previous=last_task.id)
         task_types = await get_task_types(session=session)
     await call.message.edit_text(
         "Какого вида задачу хотите создать ?",

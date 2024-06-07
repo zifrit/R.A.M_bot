@@ -17,6 +17,14 @@ async def get_task(session: AsyncSession, id_task: int) -> Tasks:
     return task
 
 
+async def get_last_task(session: AsyncSession, id_lesson: int) -> Tasks:
+    stmt = select(Tasks).filter(
+        Tasks.lesson_id == id_lesson, Tasks.next_task_id == None
+    )
+    task = await session.scalar(stmt)
+    return task
+
+
 async def create_lessons_task(
     session: AsyncSession,
     id_lesson: int,
