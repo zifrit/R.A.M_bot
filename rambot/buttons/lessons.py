@@ -11,7 +11,12 @@ def info_lesson(id_lesson):
         InlineKeyboardButton(
             text="Изменить название", callback_data=f"update_lesson_name_{id_lesson}"
         ),
-        InlineKeyboardButton(text="Назад", callback_data="back_list_lessons"),
+        InlineKeyboardButton(
+            text="Добавить задачу", callback_data=f"add_task_to_lesson_{id_lesson}"
+        ),
         width=2,
+    )
+    builder.row(
+        InlineKeyboardButton(text="Назад", callback_data="back_list_lessons"),
     )
     return builder.as_markup()

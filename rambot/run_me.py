@@ -12,6 +12,7 @@ from handlers import (
     create_profile_student,
     join_to_teacher,
     lessons,
+    tasks,
 )
 
 commands = [
@@ -30,6 +31,7 @@ async def main():
         create_profile_student.router,
         join_to_teacher.router,
         lessons.router,
+        tasks.router,
     )
     await bot.set_my_commands(commands=commands)
     await bot.delete_webhook(drop_pending_updates=True)

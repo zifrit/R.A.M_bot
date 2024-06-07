@@ -199,3 +199,16 @@ async def set_name_lesson(message: Message, state: FSMContext):
             text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
         )
         await state.clear()
+
+
+@router.callback_query(F.data == "stop_create_task")
+async def back_view_lesson(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    id_lesson = data["id_lesson"]
+    await state.clear()
+    async with session_factory() as session:
+        lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
+        text = f"📝{lesson.name}\nКоличество задач / \n✍🏻Количество проходящих / \n🥇Количество пройденных /"
+        await call.message.edit_text(
+            text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
+        )

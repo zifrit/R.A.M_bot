@@ -8,3 +8,13 @@ class CreateLesson(StatesGroup):
 class UpdateLessonName(StatesGroup):
     id_lesson = State()
     new_name = State()
+
+
+class CreateLessonTask(StatesGroup):
+    id_lesson = State()
+    question = State()
+    answer = State()
+    right_answer = State()
+    task_type_id = State()
+    next = State()
+    previous = State()
