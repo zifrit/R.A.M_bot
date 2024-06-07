@@ -36,7 +36,7 @@ class Tasks(Base):
     __tablename__ = "tasks"
     task_type_id: Mapped[int] = mapped_column(ForeignKey("task_types.id"))
     lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id"))
-    nex_task_id: Mapped[int | None] = mapped_column(
+    next_task_id: Mapped[int | None] = mapped_column(
         ForeignKey("tasks.id", ondelete="set null")
     )
     previous_task_id: Mapped[int | None] = mapped_column(
