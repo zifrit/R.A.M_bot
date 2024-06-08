@@ -42,7 +42,7 @@ class Tasks(Base):
     previous_task_id: Mapped[int | None] = mapped_column(
         ForeignKey("tasks.id", ondelete="set null")
     )
-
+    img: Mapped[str | None]
     question: Mapped[str] = mapped_column(TEXT())
     answer: Mapped[list] = mapped_column(JSON())
     right_answer: Mapped[str]
