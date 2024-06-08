@@ -12,6 +12,7 @@ class UpdateLessonName(StatesGroup):
 
 class CreateLessonTask(StatesGroup):
     id_lesson = State()
+    img = State()
     question = State()
     answer = State()
     right_answer = State()

@@ -7,7 +7,8 @@ def task_types_inline(task_types: list):
     for task_type in task_types:
         builder.row(
             InlineKeyboardButton(
-                text=task_type.name, callback_data=f"task_type_{task_type.id}"
+                text=task_type.name,
+                callback_data=f"task_type_{task_type.id}_{task_type.name}",
             )
         )
     builder.row(

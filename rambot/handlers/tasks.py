@@ -15,7 +15,7 @@ async def add_task_to_lesson(call: CallbackQuery, state: FSMContext):
     id_lesson = int(call.data.split("_")[-1])
     await state.update_data(id_lesson=id_lesson)
     async with session_factory() as session:
-        last_task = await get_last_task(session=session, id_lesson=id_lesson)
+        last_task = await get_last_lessons_task(session=session, id_lesson=id_lesson)
         if last_task:
             await state.update_data(previous=last_task.id)
         task_types = await get_task_types(session=session)
@@ -41,22 +41,35 @@ async def add_task_to_lesson(call: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith("task_type"))
 async def choice_task_type(call: CallbackQuery, state: FSMContext):
-    task_type_id = int(call.data.split("_")[-1])
+    task_type_id = int(call.data.split("_")[-2])
+    task_type_name = int(call.data.split("_")[-1])
     await state.update_data(task_type_id=task_type_id)
-    await call.message.edit_text("Отправьте само задание")
-    await state.set_state(CreateLessonTask.question)
+    if task_type_name == "Картинка":
+        await call.message.edit_text("Отправьте фото задания")
+        await state.set_state(CreateLessonTask.img)
+    else:
+        await call.message.edit_text("Отправьте само задание")
+        await state.set_state(CreateLessonTask.question)
+
+
+@router.message(CreateLessonTask.img)
+async def get_task_question(message: Message, state: FSMContext):
+    if message.photo:
+        await state.update_data(img=message.photo[-1].file_id)
+        await message.edit_text("Отправьте описания для задания")
+        await state.set_state(CreateLessonTask.question)
+    else:
+        await message.answer("Задача может быть только вида фото")
 
 
 @router.message(CreateLessonTask.question)
 async def get_task_question(message: Message, state: FSMContext):
-    if message.photo:
-        await state.update_data(question=f"img_{message.photo[-1].file_id}")
-    elif message.text:
+    if message.text:
         await state.update_data(question=message.text)
         await state.set_state(CreateLessonTask.answer)
         await message.answer("Через пробел отправьте варианты ответов")
     else:
-        await message.answer("Задача может быть только вида текст или фото")
+        await message.answer("Задача может быть только вида текст")
 
 
 @router.message(CreateLessonTask.answer)
@@ -84,6 +97,7 @@ async def get_task_answer(message: Message, state: FSMContext):
                 right_answer=data["right_answer"],
                 task_type_id=data["task_type_id"],
                 previous=data.get("previous", None),
+                img=data.get("img", None),
             )
             await message.answer(
                 "Задача успешно создана",
