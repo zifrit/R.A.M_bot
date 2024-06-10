@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 class Lesson(Base):
     __tablename__ = "lessons"
     name: Mapped[str] = mapped_column(String(255), unique=True)
+    description: Mapped[str | None] = mapped_column(String(255))
     teacher_id: Mapped[int] = mapped_column(ForeignKey("profiles_teacher.id"))
 
     tasks: Mapped[list["Tasks"]] = relationship(back_populates="lessons")
@@ -21,9 +22,11 @@ class Lesson(Base):
 class CompletedLesson(Base):
     __tablename__ = "completed_lessons"
     name: Mapped[str] = mapped_column(String(255), unique=True)
+    description: Mapped[str | None] = mapped_column(String(255))
+    point: Mapped[int]  # оценка для урок
+
     teacher_id: Mapped[int] = mapped_column(ForeignKey("profiles_teacher.id"))
     student_id: Mapped[int] = mapped_column(ForeignKey("profiles_student.id"))
-    point: Mapped[int]  # оценка для урок
 
     student: Mapped["ProfileStudent"] = relationship(back_populates="completed_lessons")
     teacher: Mapped["ProfileTeacher"] = relationship(back_populates="completed_lessons")
@@ -49,6 +52,9 @@ class Tasks(Base):
 
     task_types: Mapped["TasksTypes"] = relationship(back_populates="tasks")
     lessons: Mapped["Lesson"] = relationship(back_populates="tasks")
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(id={self.id})"
 
 
 class InProgressTasks(Base):
