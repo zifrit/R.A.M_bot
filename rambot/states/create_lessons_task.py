@@ -19,3 +19,7 @@ class CreateLessonTask(StatesGroup):
     task_type_id = State()
     next = State()
     previous = State()
+
+
+class PaginationTask(StatesGroup):
+    id_lesson = State()

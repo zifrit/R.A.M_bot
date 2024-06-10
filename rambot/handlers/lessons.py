@@ -188,6 +188,12 @@ async def back_view_lesson(call: CallbackQuery, state: FSMContext):
     async with session_factory() as session:
         lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
         text = f"📝{lesson.name}\nКоличество задач / \n✍🏻Количество проходящих / \n🥇Количество пройденных /"
-        await call.message.edit_text(
-            text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
-        )
+        if call.message.photo:
+            await call.message.delete()
+            await call.message.answer(
+                text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
+            )
+        else:
+            await call.message.edit_text(
+                text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
+            )

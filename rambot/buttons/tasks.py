@@ -27,3 +27,12 @@ def completed_tasks_inline(task):
         width=2,
     )
     return builder.as_markup()
+
+
+back_lesson = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Вернутся", callback_data="stop_create_task"),
+        ],
+    ],
+)

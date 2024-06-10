@@ -12,6 +12,9 @@ def info_lesson(id_lesson):
             text="Изменить название", callback_data=f"update_lesson_name_{id_lesson}"
         ),
         InlineKeyboardButton(
+            text="Список задач", callback_data=f"list_tasks_lesson_{id_lesson}"
+        ),
+        InlineKeyboardButton(
             text="Добавить задачу", callback_data=f"add_task_to_lesson_{id_lesson}"
         ),
         width=2,
