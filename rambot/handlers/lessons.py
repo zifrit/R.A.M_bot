@@ -41,14 +41,26 @@ async def create_lessons(message: Message, state: FSMContext):
 @router.message(CreateLesson.name_lesson)
 async def get_create_lesson_name(message: Message, state: FSMContext):
     name_lesson = message.text
+    await state.update_data(name_lesson=name_lesson)
+    await state.set_state(CreateLesson.description)
+    await message.answer(f"В видите описание для урока")
+
+
+@router.message(CreateLesson.description)
+async def get_create_lesson_name(message: Message, state: FSMContext):
+    description = message.text
+    data = await state.get_data()
     async with session_factory() as session:
         teacher = await get_teacher_by_tg_id(
             session=session, tg_id=message.from_user.id
         )
-        lesson = await create_lesson(
-            session=session, name=name_lesson, teacher_=teacher
+        await create_lesson(
+            session=session,
+            name=data["name_lesson"],
+            teacher_=teacher,
+            description=description,
         )
-        await message.answer(f"Урок с название {lesson.name}, был создан")
+        await message.answer(f"Урок был создан")
         await state.clear()
 
 
@@ -60,7 +72,7 @@ async def view_lessons_teacher(call: CallbackQuery):
             session=session, teacher_=teacher, limit=2
         )
         count_page = (
-            count_lessons // 2 + 1 if count_lessons % 2 != 0 else count_lessons // 3
+            count_lessons // 2 + 1 if count_lessons % 2 != 0 else count_lessons // 2
         )
     if 0 < count_lessons <= 2:
         text = []
@@ -121,7 +133,7 @@ async def paginator_service(call: CallbackQuery, callback_data: pagination.Pagin
             session=session, teacher_=teacher, offset=page, limit=2
         )
         count_page = (
-            count_lessons // 2 + 1 if count_lessons % 2 != 0 else count_lessons // 3
+            count_lessons // 2 + 1 if count_lessons % 2 != 0 else count_lessons // 2
         )
     text = []
     for lesson in teacher_lessons:
@@ -143,8 +155,15 @@ async def paginator_service(call: CallbackQuery, callback_data: pagination.Pagin
 async def info_lesson(message: Message):
     id_lesson = int(message.text.split("_")[-1])
     async with session_factory() as session:
+        # todo сделать проверку что бы другой человек не мог смотреть чужие уроки
         lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
-        text = f"📝{lesson.name}\nКоличество задач / \n✍🏻Количество проходящих / \n🥇Количество пройденных /"
+        text = (
+            f"📝{lesson.name}\n\n"
+            f"{lesson.description}\n\n"
+            f"Количество задач / \n"
+            f"✍🏻Количество проходящих / \n"
+            f"🥇Количество пройденных /"
+        )
         await message.answer(
             text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
         )
@@ -173,7 +192,13 @@ async def set_name_lesson(message: Message, state: FSMContext):
     async with session_factory() as session:
         await update_lesson(session=session, id_lesson=id_lesson, new_name=message.text)
         lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
-        text = f"📝{lesson.name}\nКоличество задач / \n✍🏻Количество проходящих / \n🥇Количество пройденных /"
+        text = (
+            f"📝{lesson.name}\n\n"
+            f"{lesson.description}\n\n"
+            f"Количество задач / \n"
+            f"✍🏻Количество проходящих / \n"
+            f"🥇Количество пройденных /"
+        )
         await message.answer(
             text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
         )
@@ -187,7 +212,13 @@ async def back_view_lesson(call: CallbackQuery, state: FSMContext):
     await state.clear()
     async with session_factory() as session:
         lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
-        text = f"📝{lesson.name}\nКоличество задач / \n✍🏻Количество проходящих / \n🥇Количество пройденных /"
+        text = (
+            f"📝{lesson.name}\n\n"
+            f"{lesson.description}\n\n"
+            f"Количество задач / \n"
+            f"✍🏻Количество проходящих / \n"
+            f"🥇Количество пройденных /"
+        )
         if call.message.photo:
             await call.message.delete()
             await call.message.answer(

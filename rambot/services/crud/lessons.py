@@ -10,8 +10,9 @@ async def create_lesson(
     session: AsyncSession,
     teacher_: ProfileTeacher,
     name: str,
+    description: str,
 ) -> Lesson:
-    lesson = Lesson(name=name, teacher_id=teacher_.id)
+    lesson = Lesson(name=name, teacher_id=teacher_.id, description=description)
     session.add(lesson)
     await session.commit()
     return lesson
