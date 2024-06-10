@@ -77,7 +77,7 @@ async def view_lessons_teacher(call: CallbackQuery):
         await call.message.delete()
         await call.message.answer(
             text="\n\n".join(text),
-            reply_markup=pagination.many_page_without_left(
+            reply_markup=pagination.pagination(
                 back_callback="profiled_teacher",
                 name_nex_action="next_page_lessons",
                 count_page=count_page,
@@ -93,28 +93,28 @@ async def view_lessons_teacher(call: CallbackQuery):
     )
 )
 async def paginator_service(call: CallbackQuery, callback_data: pagination.Pagination):
-    left = True
-    right = True
+    left = "prev_page_lessons"
+    right = "next_page_lessons"
     if callback_data.action == "prev_page_lessons":
         if callback_data.page > 1:
             page = callback_data.page - 1
             if page <= 1:
-                left = False
-                right = True
+                left = None
+                right = "next_page_lessons"
         else:
             page = callback_data.page
-            left = False
-            right = True
+            left = None
+            right = "next_page_lessons"
     elif callback_data.action == "next_page_lessons":
         if callback_data.page < callback_data.count_page:
             page = callback_data.page + 1
             if page >= callback_data.count_page:
-                left = True
-                right = False
+                left = "prev_page_lessons"
+                right = None
         else:
             page = callback_data.page
-            left = True
-            right = False
+            left = "prev_page_lessons"
+            right = None
     async with session_factory() as session:
         teacher = await get_teacher_by_tg_id(session=session, tg_id=call.from_user.id)
         teacher_lessons, count_lessons = await get_teacher_lessons(
@@ -127,37 +127,16 @@ async def paginator_service(call: CallbackQuery, callback_data: pagination.Pagin
     for lesson in teacher_lessons:
         text.append(f"""📝 {lesson.name}\n/info_lesson_{lesson.id}""")
     with suppress(TelegramBadRequest):
-        if right and left:
-            await call.message.edit_text(
-                reply_markup=pagination.many_page(
-                    count_page=count_page,
-                    page=page,
-                    name_prev_action="prev_page_lessons",
-                    name_nex_action="next_page_lessons",
-                    back_callback="profiled_teacher",
-                ),
-                text="\n\n".join(text),
-            )
-        elif right and not left:
-            await call.message.edit_text(
-                reply_markup=pagination.many_page_without_left(
-                    count_page=count_page,
-                    page=page,
-                    name_nex_action="next_page_lessons",
-                    back_callback="profiled_teacher",
-                ),
-                text="\n\n".join(text),
-            )
-        elif not right and left:
-            await call.message.edit_text(
-                reply_markup=pagination.many_page_without_right(
-                    count_page=count_page,
-                    page=page,
-                    name_prev_action="prev_page_lessons",
-                    back_callback="profiled_teacher",
-                ),
-                text="\n\n".join(text),
-            )
+        await call.message.edit_text(
+            reply_markup=pagination.pagination(
+                count_page=count_page,
+                page=page,
+                name_prev_action=left,
+                name_nex_action=right,
+                back_callback="profiled_teacher",
+            ),
+            text="\n\n".join(text),
+        )
 
 
 @router.message(F.text.startswith("/info_lesson"))

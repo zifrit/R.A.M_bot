@@ -9,70 +9,81 @@ class Pagination(CallbackData, prefix="pagination"):
     count_page: int
 
 
-def many_page(
+def pagination(
     back_callback: str,
-    name_prev_action: str,
-    name_nex_action: str,
+    name_prev_action: str | None = None,
+    name_nex_action: str | None = None,
     page: int = 1,
     count_page: int = 1,
 ):
-    builder = InlineKeyboardBuilder()
-    builder.row(
-        InlineKeyboardButton(
-            text="⬅️",
-            callback_data=Pagination(
-                action=name_prev_action, page=page, count_page=count_page
-            ).pack(),
-        ),
-        InlineKeyboardButton(text=f"{page} из {count_page} стр.", callback_data="list"),
-        InlineKeyboardButton(
-            text="➡️",
-            callback_data=Pagination(
-                action=name_nex_action, page=page, count_page=count_page
-            ).pack(),
-        ),
-        InlineKeyboardButton(text="Назад", callback_data=back_callback),
-        width=3,
-    )
-    return builder.as_markup()
-
-
-def many_page_without_left(
-    back_callback: str, name_nex_action: str, page: int = 1, count_page: int = 1
-):
-    builder = InlineKeyboardBuilder()
-    builder.row(
-        InlineKeyboardButton(text="❎", callback_data="❎"),
-        InlineKeyboardButton(text=f"{page} из {count_page} стр.", callback_data="list"),
-        InlineKeyboardButton(
-            text="➡️",
-            callback_data=Pagination(
-                action=name_nex_action, page=page, count_page=count_page
-            ).pack(),
-        ),
-        InlineKeyboardButton(text="Назад", callback_data=back_callback),
-        width=3,
-    )
-    return builder.as_markup()
-
-
-def many_page_without_right(
-    back_callback: str, name_prev_action: str, page: int = 1, count_page: int = 1
-):
-    builder = InlineKeyboardBuilder()
-    builder.row(
-        InlineKeyboardButton(
-            text="⬅️",
-            callback_data=Pagination(
-                action=name_prev_action, page=page, count_page=count_page
-            ).pack(),
-        ),
-        InlineKeyboardButton(text=f"{page} из {count_page} стр.", callback_data="list"),
-        InlineKeyboardButton(text="❎", callback_data="❎"),
-        InlineKeyboardButton(text="Назад", callback_data=back_callback),
-        width=3,
-    )
-    return builder.as_markup()
+    if name_prev_action and name_nex_action:
+        builder = InlineKeyboardBuilder()
+        builder.row(
+            InlineKeyboardButton(
+                text="⬅️",
+                callback_data=Pagination(
+                    action=name_prev_action, page=page, count_page=count_page
+                ).pack(),
+            ),
+            InlineKeyboardButton(
+                text=f"{page} из {count_page} стр.", callback_data="list"
+            ),
+            InlineKeyboardButton(
+                text="➡️",
+                callback_data=Pagination(
+                    action=name_nex_action, page=page, count_page=count_page
+                ).pack(),
+            ),
+            InlineKeyboardButton(text="Назад", callback_data=back_callback),
+            width=3,
+        )
+        return builder.as_markup()
+    elif name_prev_action:
+        builder = InlineKeyboardBuilder()
+        builder.row(
+            InlineKeyboardButton(
+                text="⬅️",
+                callback_data=Pagination(
+                    action=name_prev_action, page=page, count_page=count_page
+                ).pack(),
+            ),
+            InlineKeyboardButton(
+                text=f"{page} из {count_page} стр.", callback_data="list"
+            ),
+            InlineKeyboardButton(text="❎", callback_data="❎"),
+            InlineKeyboardButton(text="Назад", callback_data=back_callback),
+            width=3,
+        )
+        return builder.as_markup()
+    elif name_nex_action:
+        builder = InlineKeyboardBuilder()
+        builder.row(
+            InlineKeyboardButton(text="❎", callback_data="❎"),
+            InlineKeyboardButton(
+                text=f"{page} из {count_page} стр.", callback_data="list"
+            ),
+            InlineKeyboardButton(
+                text="➡️",
+                callback_data=Pagination(
+                    action=name_nex_action, page=page, count_page=count_page
+                ).pack(),
+            ),
+            InlineKeyboardButton(text="Назад", callback_data=back_callback),
+            width=3,
+        )
+        return builder.as_markup()
+    else:
+        builder = InlineKeyboardBuilder()
+        builder.row(
+            InlineKeyboardButton(text="❎", callback_data="❎"),
+            InlineKeyboardButton(
+                text=f"{page} из {count_page} стр.", callback_data="list"
+            ),
+            InlineKeyboardButton(text="❎", callback_data="❎"),
+            InlineKeyboardButton(text="Назад", callback_data=back_callback),
+            width=3,
+        )
+        return builder.as_markup()
 
 
 back_teacher_profile = InlineKeyboardMarkup(
