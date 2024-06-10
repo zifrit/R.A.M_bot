@@ -208,12 +208,8 @@ async def paginator_tasks(
         tasks, count_tasks = await get_lessons_tasks(
             session=session, id_lesson=id_lesson, offset=page
         )
-        print(tasks[0].id)
     with suppress(TelegramBadRequest):
-        # print(call.message.photo)
-        # print(call.message.text)
         if tasks[0].img:
-            print("img")
             await call.message.delete()
             await call.message.answer_photo(
                 photo=tasks[0].img,
@@ -231,7 +227,6 @@ async def paginator_tasks(
                 ),
             )
         else:
-            print("not img")
             if call.message.photo:
                 await call.message.delete()
                 await call.message.answer(
