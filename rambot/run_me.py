@@ -19,6 +19,7 @@ commands = [
     types.BotCommand(command="start", description="запуск бота"),
     types.BotCommand(command="create_lesson", description="создать урок"),
     types.BotCommand(command="profiles", description="Профили"),
+    types.BotCommand(command="search_lesson", description="Поиск урока"),
 ]
 
 

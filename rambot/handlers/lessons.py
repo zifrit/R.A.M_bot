@@ -11,13 +11,13 @@ from services.crud.users import (
 from services.crud.lessons import (
     create_lesson,
     update_lesson,
-    get_count_teacher_lessons,
+    search_lessons,
     delete_lesson_by_id,
     get_lesson_by_id,
     get_teacher_lessons,
 )
 from buttons import profiles, start, lessons, pagination
-from states.create_lessons_task import UpdateLessonName, CreateLesson
+from states.create_lessons_task import UpdateLessonName, CreateLesson, SearchLesson
 
 router = Router()
 
@@ -228,3 +228,120 @@ async def back_view_lesson(call: CallbackQuery, state: FSMContext):
             await call.message.edit_text(
                 text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
             )
+
+
+@router.message(F.text == "/search_lesson")
+async def student_search_lessons(message: Message, state: FSMContext):
+    await message.answer("Введите что вы хотите найти...")
+    await state.clear()
+    await state.set_state(SearchLesson.search)
+
+
+@router.callback_query(F.data == "search_lesson")
+async def student_search_lessons(call: CallbackQuery, state: FSMContext):
+    await call.message.answer("Введите что вы хотите найти...")
+    await state.clear()
+    await state.set_state(SearchLesson.search)
+
+
+@router.message(SearchLesson.search)
+async def get_search_lessons(message: Message, state: FSMContext):
+    search = message.text
+    await state.update_data(search=search)
+    async with session_factory() as session:
+        lessons, count_lessons = await search_lessons(
+            session=session, search=search, limit=3
+        )
+
+        count_page = (
+            count_lessons // 3 + 1 if count_lessons % 3 != 0 else count_lessons // 3
+        )
+        if 0 < count_lessons <= 3:
+            text = []
+            for lesson in lessons:
+                text.append(
+                    f"""📝 {lesson.name}
+Преподаватель:{lesson.teacher.first_name} {lesson.teacher.last_name}
+Количество задач: {len(lesson.tasks)}\n
+/lesson_info_{lesson.id}"""
+                )
+            await message.answer(
+                text="\n\n".join(text), reply_markup=pagination.repeat_search_lesson
+            )
+        elif count_lessons > 3:
+            text = []
+            for lesson in lessons:
+                text.append(
+                    f"""📝 {lesson.name}
+Преподаватель:{lesson.teacher.first_name} {lesson.teacher.last_name}
+Количество задач: {len(lesson.tasks)}\n
+/lesson_info_{lesson.id}"""
+                )
+            await message.answer(
+                text="\n\n".join(text),
+                reply_markup=pagination.pagination_2(
+                    name_nex_action="next_page_search_lessons",
+                    count_page=count_page,
+                ),
+            )
+        else:
+            await message.answer(text="Ничего не было найдено")
+
+
+@router.callback_query(
+    pagination.Pagination.filter(
+        F.action.in_(["prev_page_search_lessons", "next_page_search_lessons"])
+    )
+)
+async def paginator_service(
+    call: CallbackQuery, callback_data: pagination.Pagination, state: FSMContext
+):
+    left = "prev_page_search_lessons"
+    right = "next_page_search_lessons"
+    if callback_data.action == "prev_page_search_lessons":
+        if callback_data.page > 1:
+            page = callback_data.page - 1
+            if page <= 1:
+                left = None
+                right = "next_page_search_lessons"
+        else:
+            page = callback_data.page
+            left = None
+            right = "next_page_search_lessons"
+    elif callback_data.action == "next_page_search_lessons":
+        if callback_data.page < callback_data.count_page:
+            page = callback_data.page + 1
+            if page >= callback_data.count_page:
+                left = "prev_page_search_lessons"
+                right = None
+        else:
+            page = callback_data.page
+            left = "prev_page_search_lessons"
+            right = None
+    async with session_factory() as session:
+        data = await state.get_data()
+        lessons, count_lessons = await search_lessons(
+            session=session, search=data["search"], limit=3, offset=page
+        )
+
+        count_page = (
+            count_lessons // 3 + 1 if count_lessons % 3 != 0 else count_lessons // 3
+        )
+        text = []
+        for lesson in lessons:
+            text.append(
+                f"""📝 {lesson.name}
+Преподаватель:{lesson.teacher.first_name} {lesson.teacher.last_name}
+Количество задач: {len(lesson.tasks)}\n
+/lesson_info_{lesson.id}"""
+            )
+    with suppress(TelegramBadRequest):
+        await call.message.edit_text(
+            text="\n\n".join(text),
+            reply_markup=pagination.pagination_2(
+                count_page=count_page,
+                page=page,
+                name_prev_action=left,
+                name_nex_action=right,
+            ),
+        )

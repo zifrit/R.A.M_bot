@@ -1,4 +1,4 @@
-from sqlalchemy import select, func, desc, asc
+from sqlalchemy import select, func, desc, asc, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -68,3 +68,40 @@ async def delete_lesson_by_id(session: AsyncSession, id_lesson: int) -> None:
     lesson = await get_lesson_by_id(session, id_lesson)
     await session.delete(lesson)
     await session.commit()
+
+
+async def get_count_search_lessons(
+    session: AsyncSession,
+    search: str,
+) -> int:
+    count_teacher_lessons = await session.execute(
+        select(func.count(Lesson.id)).filter(
+            or_(
+                Lesson.name.icontains(search),
+                Lesson.description.icontains(search),
+            )
+        )
+    )
+    count_teacher_lessons = count_teacher_lessons.scalar_one()
+    return count_teacher_lessons
+
+
+async def search_lessons(
+    session: AsyncSession,
+    search: str,
+    limit: int = 5,  # page size
+    offset: int = 1,  # page number
+) -> tuple[list[Lesson], int]:
+    lessons = await session.scalars(
+        select(Lesson)
+        .options(joinedload(Lesson.teacher), selectinload(Lesson.tasks))
+        .limit(limit)
+        .offset(offset=(limit * (offset - 1)))
+        .filter(
+            or_(
+                Lesson.name.icontains(search),
+                Lesson.description.icontains(search),
+            )
+        )
+    )
+    return list(lessons), await get_count_search_lessons(session, search)

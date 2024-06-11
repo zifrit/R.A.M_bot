@@ -18,6 +18,9 @@ class Lesson(Base):
     tasks: Mapped[list["Tasks"]] = relationship(back_populates="lessons")
     teacher: Mapped["ProfileTeacher"] = relationship(back_populates="lessons")
 
+    def __str__(self):
+        return f"{self.__class__.__name__}(id={self.id})"
+
 
 class CompletedLesson(Base):
     __tablename__ = "completed_lessons"
