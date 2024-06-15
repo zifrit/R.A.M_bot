@@ -24,7 +24,7 @@ class Lesson(Base):
 
 class InProgressLesson(Base):
     __tablename__ = "in_progress_lessons"
-    name: Mapped[str] = mapped_column(String(255), unique=True)
+    name: Mapped[str] = mapped_column(String(255))
     description: Mapped[str | None] = mapped_column(String(255))
     point: Mapped[int | None]  # оценка для урок
 
