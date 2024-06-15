@@ -15,6 +15,7 @@ from services.crud.lessons import (
     delete_lesson_by_id,
     get_lesson_by_id,
     get_teacher_lessons,
+    get_lesson_by_id_full,
 )
 from buttons import profiles, start, lessons, pagination
 from states.create_lessons_task import UpdateLessonName, CreateLesson, SearchLesson
@@ -152,21 +153,44 @@ async def paginator_service(call: CallbackQuery, callback_data: pagination.Pagin
 
 
 @router.message(F.text.startswith("/info_lesson"))
-async def info_lesson(message: Message):
+async def info_lesson(message: Message, state: FSMContext):
+    data = await state.get_data()
+    await state.clear()
     id_lesson = int(message.text.split("_")[-1])
     async with session_factory() as session:
-        # todo сделать проверку что бы другой человек не мог смотреть чужие уроки
-        lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
-        text = (
-            f"📝{lesson.name}\n\n"
-            f"{lesson.description}\n\n"
-            f"Количество задач / \n"
-            f"✍🏻Количество проходящих / \n"
-            f"🥇Количество пройденных /"
-        )
-        await message.answer(
-            text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
-        )
+        if data.get("search", False):
+            lesson = await get_lesson_by_id_full(session=session, id_lesson=id_lesson)
+            text = (
+                f"📝{lesson.name}\n\n"
+                f"Преподаватель: {lesson.teacher.first_name} {lesson.teacher.last_name}\n"
+                f"Количество задач: {len(lesson.tasks)}\n"
+                f"Описание: {lesson.description}\n\n"
+            )
+            await message.answer(
+                text=text,
+                reply_markup=lessons.info_lesson(id_lesson=id_lesson, search=True),
+            )
+        else:
+            lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
+            teacher = await get_teacher_by_tg_id(
+                session=session, tg_id=message.from_user.id
+            )
+            if lesson:
+                if lesson.teacher_id == teacher.id:
+                    text = (
+                        f"📝{lesson.name}\n\n"
+                        f"{lesson.description}\n\n"
+                        f"Количество задач / \n"
+                        f"✍🏻Количество проходящих / \n"
+                        f"🥇Количество пройденных /"
+                    )
+                    await message.answer(
+                        text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
+                    )
+                else:
+                    await message.answer(text="Вы не можете смотреть чужие уроки!")
+            else:
+                await message.answer(text="Такого урока нет")
 
 
 @router.callback_query(F.data.startswith("delete_lesson"))

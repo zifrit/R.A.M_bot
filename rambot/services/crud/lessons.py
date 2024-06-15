@@ -27,6 +27,19 @@ async def get_lesson_by_id(
     return lesson
 
 
+async def get_lesson_by_id_full(
+    session: AsyncSession,
+    id_lesson: int,
+) -> Lesson:
+
+    lesson = await session.scalar(
+        select(Lesson)
+        .options(joinedload(Lesson.teacher), selectinload(Lesson.tasks))
+        .where(Lesson.id == id_lesson)
+    )
+    return lesson
+
+
 async def update_lesson(
     session: AsyncSession,
     id_lesson: int,
