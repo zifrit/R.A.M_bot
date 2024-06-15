@@ -239,7 +239,7 @@ async def student_search_lessons(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "search_lesson")
 async def student_search_lessons(call: CallbackQuery, state: FSMContext):
-    await call.message.answer("Введите что вы хотите найти...")
+    await call.message.edit_text("Введите что вы хотите найти...")
     await state.clear()
     await state.set_state(SearchLesson.search)
 
@@ -263,7 +263,7 @@ async def get_search_lessons(message: Message, state: FSMContext):
                     f"""📝 {lesson.name}
 Преподаватель:{lesson.teacher.first_name} {lesson.teacher.last_name}
 Количество задач: {len(lesson.tasks)}\n
-/lesson_info_{lesson.id}"""
+/info_lesson_{lesson.id}"""
                 )
             await message.answer(
                 text="\n\n".join(text), reply_markup=pagination.repeat_search_lesson
@@ -275,17 +275,22 @@ async def get_search_lessons(message: Message, state: FSMContext):
                     f"""📝 {lesson.name}
 Преподаватель:{lesson.teacher.first_name} {lesson.teacher.last_name}
 Количество задач: {len(lesson.tasks)}\n
-/lesson_info_{lesson.id}"""
+/info_lesson_{lesson.id}"""
                 )
             await message.answer(
                 text="\n\n".join(text),
-                reply_markup=pagination.pagination_2(
+                reply_markup=pagination.pagination(
+                    back_callback="search_lesson",
+                    back_text="Повторить поиск",
                     name_nex_action="next_page_search_lessons",
                     count_page=count_page,
                 ),
             )
         else:
-            await message.answer(text="Ничего не было найдено")
+            await message.answer(
+                text="Ничего не было найдено",
+                reply_markup=pagination.repeat_search_lesson,
+            )
 
 
 @router.callback_query(
@@ -333,12 +338,14 @@ async def paginator_service(
                 f"""📝 {lesson.name}
 Преподаватель:{lesson.teacher.first_name} {lesson.teacher.last_name}
 Количество задач: {len(lesson.tasks)}\n
-/lesson_info_{lesson.id}"""
+/info_lesson_{lesson.id}"""
             )
     with suppress(TelegramBadRequest):
         await call.message.edit_text(
             text="\n\n".join(text),
-            reply_markup=pagination.pagination_2(
+            reply_markup=pagination.pagination(
+                back_callback="search_lesson",
+                back_text="Повторить поиск",
                 count_page=count_page,
                 page=page,
                 name_prev_action=left,
