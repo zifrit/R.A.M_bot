@@ -26,7 +26,7 @@ class InProgressLesson(Base):
     __tablename__ = "in_progress_lessons"
     name: Mapped[str] = mapped_column(String(255), unique=True)
     description: Mapped[str | None] = mapped_column(String(255))
-    point: Mapped[int]  # оценка для урок
+    point: Mapped[int | None]  # оценка для урок
 
     teacher_id: Mapped[int] = mapped_column(ForeignKey("profiles_teacher.id"))
     student_id: Mapped[int] = mapped_column(ForeignKey("profiles_student.id"))
@@ -71,13 +71,10 @@ class InProgressTasks(Base):
     in_progress_lessons_id: Mapped[int] = mapped_column(
         ForeignKey("in_progress_lessons.id")
     )
-    nex_task_id: Mapped[int | None] = mapped_column(
-        ForeignKey("in_progress_tasks.id", ondelete="set null")
-    )
-    previous_task_id: Mapped[int | None] = mapped_column(
-        ForeignKey("in_progress_tasks.id", ondelete="set null")
-    )
+    nex_task_id: Mapped[int | None]
+    previous_task_id: Mapped[int | None]
 
+    img: Mapped[str | None]
     question: Mapped[str] = mapped_column(TEXT())
     answer: Mapped[list] = mapped_column(JSON())
     right_answer: Mapped[str]
