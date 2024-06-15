@@ -24,3 +24,7 @@ class CreateLessonTask(StatesGroup):
 
 class PaginationTask(StatesGroup):
     id_lesson = State()
+
+
+class SearchLesson(StatesGroup):
+    search = State()
