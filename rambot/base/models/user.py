@@ -14,7 +14,7 @@ from sqlalchemy import (
 from base.models import Base
 
 if TYPE_CHECKING:
-    from base.models.lessons import CompletedLesson, InProgressTasks, Lesson
+    from base.models.lessons import InProgressLesson, InProgressTasks, Lesson
 
 
 class User(Base):
@@ -57,7 +57,7 @@ class ProfileTeacher(Base):
         back_populates="teachers",
     )
     lessons: Mapped["Lesson"] = relationship(back_populates="teacher")
-    completed_lessons: Mapped["CompletedLesson"] = relationship(
+    in_progress_lessons: Mapped["InProgressLesson"] = relationship(
         back_populates="teacher"
     )
 
@@ -77,6 +77,6 @@ class ProfileStudent(Base):
         secondary=association_student_teacher_table,
         back_populates="students",
     )
-    completed_lessons: Mapped["CompletedLesson"] = relationship(
+    in_progress_lessons: Mapped["InProgressLesson"] = relationship(
         back_populates="student"
     )

@@ -22,19 +22,24 @@ class Lesson(Base):
         return f"{self.__class__.__name__}(id={self.id})"
 
 
-class CompletedLesson(Base):
-    __tablename__ = "completed_lessons"
+class InProgressLesson(Base):
+    __tablename__ = "in_progress_lessons"
     name: Mapped[str] = mapped_column(String(255), unique=True)
     description: Mapped[str | None] = mapped_column(String(255))
     point: Mapped[int]  # оценка для урок
 
     teacher_id: Mapped[int] = mapped_column(ForeignKey("profiles_teacher.id"))
     student_id: Mapped[int] = mapped_column(ForeignKey("profiles_student.id"))
+    completed: Mapped[bool] = mapped_column(default=False)
 
-    student: Mapped["ProfileStudent"] = relationship(back_populates="completed_lessons")
-    teacher: Mapped["ProfileTeacher"] = relationship(back_populates="completed_lessons")
-    completed_tasks: Mapped[list["InProgressTasks"]] = relationship(
-        back_populates="completed_lessons"
+    student: Mapped["ProfileStudent"] = relationship(
+        back_populates="in_progress_lessons"
+    )
+    teacher: Mapped["ProfileTeacher"] = relationship(
+        back_populates="in_progress_lessons"
+    )
+    in_progress_tasks: Mapped[list["InProgressTasks"]] = relationship(
+        back_populates="in_progress_lessons"
     )
 
 
@@ -63,7 +68,9 @@ class Tasks(Base):
 class InProgressTasks(Base):
     __tablename__ = "in_progress_tasks"
     task_type_id: Mapped[int] = mapped_column(ForeignKey("task_types.id"))
-    completed_lesson_id: Mapped[int] = mapped_column(ForeignKey("completed_lessons.id"))
+    in_progress_lessons_id: Mapped[int] = mapped_column(
+        ForeignKey("in_progress_lessons.id")
+    )
     nex_task_id: Mapped[int | None] = mapped_column(
         ForeignKey("in_progress_tasks.id", ondelete="set null")
     )
@@ -79,8 +86,8 @@ class InProgressTasks(Base):
     teacher_verify: Mapped[bool] = mapped_column(default=False)
 
     task_types: Mapped["TasksTypes"] = relationship(back_populates="completed_tasks")
-    completed_lessons: Mapped["CompletedLesson"] = relationship(
-        back_populates="completed_tasks"
+    in_progress_lessons: Mapped["InProgressLesson"] = relationship(
+        back_populates="in_progress_tasks"
     )
 
 
