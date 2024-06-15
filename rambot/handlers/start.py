@@ -68,6 +68,9 @@ async def profile(message: Message, state: FSMContext):
             await message.answer_photo(
                 photo=teacher.image,
                 caption=f"{teacher.first_name} {teacher.last_name} \n\n\n\n{teacher.bio}",
+                reply_markup=profiles.view_profile(
+                    callback_data="re_register_teacher_profile", is_teacher=True
+                ),
             )
         elif user.is_student:
             student = await get_student_by_tg_id(
@@ -75,6 +78,9 @@ async def profile(message: Message, state: FSMContext):
             )
             await message.answer(
                 text=f"{student.first_name} {student.last_name}",
+                reply_markup=profiles.view_profile(
+                    callback_data="re_register_student_profile"
+                ),
             )
 
 
@@ -95,6 +101,9 @@ async def profile(call: CallbackQuery):
             await call.message.answer_photo(
                 photo=teacher.image,
                 caption=f"{teacher.first_name} {teacher.last_name} \n\n\n\n{teacher.bio}",
+                reply_markup=profiles.view_profile(
+                    callback_data="re_register_teacher_profile", is_teacher=True
+                ),
             )
         elif user.is_student:
             student = await get_student_by_tg_id(
@@ -102,6 +111,9 @@ async def profile(call: CallbackQuery):
             )
             await call.message.answer(
                 text=f"{student.first_name} {student.last_name}",
+                reply_markup=profiles.view_profile(
+                    callback_data="re_register_student_profile"
+                ),
             )
 
 

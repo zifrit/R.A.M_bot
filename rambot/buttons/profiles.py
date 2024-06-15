@@ -103,7 +103,6 @@ def view_profile(callback_data, is_teacher=False):
         )
     builder.row(
         InlineKeyboardButton(text="Пересоздать профиль", callback_data=callback_data),
-        InlineKeyboardButton(text="Назад", callback_data="back_choice_profile"),
         width=1,
     )
     return builder.as_markup()
