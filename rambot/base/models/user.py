@@ -1,7 +1,15 @@
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import String, ForeignKey, Table, Column, Integer, UniqueConstraint
+from sqlalchemy import (
+    String,
+    ForeignKey,
+    Table,
+    Column,
+    Integer,
+    UniqueConstraint,
+    BigInteger,
+)
 
 from base.models import Base
 
@@ -12,7 +20,7 @@ if TYPE_CHECKING:
 class User(Base):
     __tablename__ = "users"
     username: Mapped[str] = mapped_column(String(255))
-    tg_id: Mapped[int] = mapped_column(primary_key=True, unique=True)
+    tg_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, unique=True)
     is_student: Mapped[bool] = mapped_column(default=False)
     profile_student: Mapped["ProfileStudent"] = relationship(back_populates="user")
     is_teacher: Mapped[bool] = mapped_column(default=False)
