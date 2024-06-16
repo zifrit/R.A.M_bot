@@ -7,13 +7,8 @@ def info_lesson(id_lesson, search: bool = False):
     if search:
         builder.row(
             InlineKeyboardButton(
-                text="Добавить", callback_data=f"add_lesson_{id_lesson}"
-            ),
-            InlineKeyboardButton(
-                text="Начать",
-                callback_data=f"start_lesson_tasks_{id_lesson}",
-            ),
-            width=2,
+                text="Добавить к себе", callback_data=f"add_lesson_{id_lesson}"
+            )
         )
         builder.row(
             InlineKeyboardButton(text="Повторить поиск", callback_data="search_lesson"),
@@ -38,4 +33,26 @@ def info_lesson(id_lesson, search: bool = False):
         builder.row(
             InlineKeyboardButton(text="Назад", callback_data="back_list_lessons"),
         )
+    return builder.as_markup()
+
+
+def start_work_lesson(id_lesson: int):
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="Начать проходить",
+            callback_data=f"start_work_lesson_tasks_{id_lesson}",
+        ),
+    )
+    return builder.as_markup()
+
+
+def continue_work_lesson(id_lesson: int):
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="Продолжить проходить",
+            callback_data=f"continue_work_lesson_tasks_{id_lesson}",
+        ),
+    )
     return builder.as_markup()

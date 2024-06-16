@@ -20,7 +20,7 @@ from services.crud.lessons import (
     start_lesson,
 )
 from buttons import profiles, start, lessons, pagination
-from states.create_lessons_task import UpdateLessonName, CreateLesson, SearchLesson
+from states.lessons_task import UpdateLessonName, CreateLesson, SearchLesson
 
 router = Router()
 
@@ -392,6 +392,16 @@ async def start_taking_lesson(call: CallbackQuery):
                 session=session, id_lesson=id_lesson, id_student=student.id
             )
             if status:
-                await call.message.answer("Добавило")
+                await call.message.edit_text(
+                    "Добавлено",
+                    reply_markup=lessons.start_work_lesson(
+                        id_lesson=in_progress_lesson.id
+                    ),
+                )
             else:
-                await call.message.answer("Вы уже добавили его к себе в список ")
+                await call.message.edit_text(
+                    "Вы уже добавили его к себе в список",
+                    reply_markup=lessons.continue_work_lesson(
+                        id_lesson=in_progress_lesson.id
+                    ),
+                )

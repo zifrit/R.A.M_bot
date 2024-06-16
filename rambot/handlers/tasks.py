@@ -14,7 +14,7 @@ from services.crud.tasks import (
 )
 from buttons.tasks import task_types_inline, completed_tasks_inline, back_lesson
 from buttons.pagination import pagination, Pagination
-from states.create_lessons_task import CreateLessonTask
+from states.lessons_task import CreateLessonTask
 
 router = Router()
 
