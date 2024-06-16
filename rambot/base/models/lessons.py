@@ -1,7 +1,8 @@
+import enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-from sqlalchemy import String, ForeignKey, TEXT, Boolean, Float, Integer
+from sqlalchemy import String, ForeignKey, TEXT, Boolean, Float, Enum
 from sqlalchemy.dialects.postgresql import JSON
 from base.models import Base
 
@@ -65,6 +66,12 @@ class Tasks(Base):
         return f"{self.__class__.__name__}(id={self.id})"
 
 
+class ProgressTask(enum.Enum):
+    incomplete = "incomplete"
+    now = "now"
+    complete = "complete"
+
+
 class InProgressTasks(Base):
     __tablename__ = "in_progress_tasks"
     task_type_id: Mapped[int] = mapped_column(ForeignKey("task_types.id"))
@@ -78,6 +85,9 @@ class InProgressTasks(Base):
     question: Mapped[str] = mapped_column(TEXT())
     answer: Mapped[list] = mapped_column(JSON())
     right_answer: Mapped[str]
+    progress: Mapped[str] = mapped_column(
+        Enum(ProgressTask, name="progress"), default=ProgressTask.incomplete
+    )
     student_answer: Mapped[str | None]
     system_verify: Mapped[bool] = mapped_column(default=False)
     teacher_verify: Mapped[bool] = mapped_column(default=False)
