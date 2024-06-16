@@ -78,7 +78,7 @@ class InProgressTasks(Base):
     in_progress_lessons_id: Mapped[int] = mapped_column(
         ForeignKey("in_progress_lessons.id")
     )
-    nex_task_id: Mapped[int | None]
+    next_task_id: Mapped[int | None]
     previous_task_id: Mapped[int | None]
 
     img: Mapped[str | None]
