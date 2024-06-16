@@ -2,7 +2,7 @@ from sqlalchemy import select, func, desc, asc, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from base.models.lessons import Lesson
+from base.models.lessons import Lesson, InProgressLesson, InProgressTasks, Tasks
 from base.models.user import ProfileTeacher
 
 
@@ -118,3 +118,68 @@ async def search_lessons(
         )
     )
     return list(lessons), await get_count_search_lessons(session, search)
+
+
+async def start_lesson(
+    session: AsyncSession,
+    id_lesson: int,
+    id_student: int,
+) -> tuple[InProgressLesson, bool]:
+    lesson = await get_lesson_by_id_full(session, id_lesson)
+    in_progress_lesson = await session.scalar(
+        select(InProgressLesson).where(
+            InProgressLesson.name == lesson.name,
+            InProgressLesson.student_id == id_student,
+        )
+    )
+    if in_progress_lesson:
+        return in_progress_lesson, False
+    in_progress_lesson = InProgressLesson(
+        name=lesson.name,
+        teacher_id=lesson.teacher_id,
+        description=lesson.description,
+        student_id=id_student,
+    )
+    session.add(in_progress_lesson)
+    await session.commit()
+
+    prev_lesson_task = await session.scalar(
+        select(Tasks).where(
+            Tasks.lesson_id == id_lesson,
+            Tasks.previous_task_id == None,
+        )
+    )
+    prev_lesson_progress_tasks = InProgressTasks(
+        task_type_id=prev_lesson_task.task_type_id,
+        in_progress_lessons_id=in_progress_lesson.id,
+        img=prev_lesson_task.img,
+        question=prev_lesson_task.question,
+        answer=prev_lesson_task.answer,
+        right_answer=prev_lesson_task.right_answer,
+    )
+    session.add(prev_lesson_progress_tasks)
+    await session.commit()
+    while True:
+        if not prev_lesson_task.next_task_id:
+            break
+        next_lesson_task = await session.scalar(
+            select(Tasks).where(
+                Tasks.id == prev_lesson_task.next_task_id,
+            )
+        )
+        next_lesson_progress_tasks = InProgressTasks(
+            task_type_id=next_lesson_task.task_type_id,
+            in_progress_lessons_id=in_progress_lesson.id,
+            img=next_lesson_task.img,
+            previous_task_id=prev_lesson_progress_tasks.id,
+            question=next_lesson_task.question,
+            answer=next_lesson_task.answer,
+            right_answer=next_lesson_task.right_answer,
+        )
+        session.add(next_lesson_progress_tasks)
+        await session.commit()
+        prev_lesson_progress_tasks.nex_task_id = next_lesson_progress_tasks.id
+        await session.commit()
+        prev_lesson_task = next_lesson_task
+        prev_lesson_progress_tasks = next_lesson_progress_tasks
+    return in_progress_lesson, True

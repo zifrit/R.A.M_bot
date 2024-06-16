@@ -7,6 +7,7 @@ from aiogram.types import Message, CallbackQuery
 from base.db import session_factory
 from services.crud.users import (
     get_teacher_by_tg_id,
+    get_student_by_tg_id,
 )
 from services.crud.lessons import (
     create_lesson,
@@ -16,6 +17,7 @@ from services.crud.lessons import (
     get_lesson_by_id,
     get_teacher_lessons,
     get_lesson_by_id_full,
+    start_lesson,
 )
 from buttons import profiles, start, lessons, pagination
 from states.create_lessons_task import UpdateLessonName, CreateLesson, SearchLesson
@@ -376,3 +378,20 @@ async def paginator_service(
                 name_nex_action=right,
             ),
         )
+
+
+@router.callback_query(F.data.startswith("add_lesson_"))
+async def start_taking_lesson(call: CallbackQuery):
+    id_lesson = int(call.data.split("_")[-1])
+    async with session_factory() as session:
+        student = await get_student_by_tg_id(session=session, tg_id=call.from_user.id)
+        if not student:
+            await call.message.answer("У вас нету профиля студента")
+        else:
+            in_progress_lesson, status = await start_lesson(
+                session=session, id_lesson=id_lesson, id_student=student.id
+            )
+            if status:
+                await call.message.answer("Добавило")
+            else:
+                await call.message.answer("Вы уже добавили его к себе в список ")

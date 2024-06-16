@@ -11,7 +11,7 @@ def info_lesson(id_lesson, search: bool = False):
             ),
             InlineKeyboardButton(
                 text="Начать",
-                callback_data=f"start_lesson_{id_lesson}",
+                callback_data=f"start_lesson_tasks_{id_lesson}",
             ),
             width=2,
         )
