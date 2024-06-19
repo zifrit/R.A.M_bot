@@ -91,17 +91,21 @@ y_n_fio_student = InlineKeyboardMarkup(
 )
 
 
-def view_profile(callback_data, is_teacher=False):
+def view_teacher_profile(callback_data):
     builder = InlineKeyboardBuilder()
-    if is_teacher:
-        builder.row(
-            InlineKeyboardButton(
-                text="Создать ключ", callback_data="create_join_token"
-            ),
-            InlineKeyboardButton(text="Мои уроки", callback_data="view_my_lessons"),
-            width=1,
-        )
     builder.row(
+        InlineKeyboardButton(text="Создать ключ", callback_data="create_join_token"),
+        InlineKeyboardButton(text="Мои уроки", callback_data="view_my_lessons"),
+        InlineKeyboardButton(text="Пересоздать профиль", callback_data=callback_data),
+        width=1,
+    )
+    return builder.as_markup()
+
+
+def view_student_profile(callback_data):
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="Мои уроки", callback_data="view_my_lessons"),
         InlineKeyboardButton(text="Пересоздать профиль", callback_data=callback_data),
         width=1,
     )
