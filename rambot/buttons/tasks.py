@@ -36,3 +36,35 @@ back_lesson = InlineKeyboardMarkup(
         ],
     ],
 )
+
+
+def task_answers_inline(next_tasks_id: int = None, answers: list = None):
+    builder = InlineKeyboardBuilder()
+    if answers:
+        for answer in answers:
+            builder.row(
+                InlineKeyboardButton(
+                    text=answer,
+                    callback_data=f"next_tasks_{next_tasks_id}_{answer}",
+                )
+            )
+    builder.row(
+        InlineKeyboardButton(text="Остановить урок", callback_data="stop_work_task"),
+    )
+    return builder.as_markup()
+
+
+def last_task_answers_inline(last_task_id: int = None, answers: list = None):
+    builder = InlineKeyboardBuilder()
+    if answers:
+        for answer in answers:
+            builder.row(
+                InlineKeyboardButton(
+                    text=answer,
+                    callback_data=f"finish_work_lesson_{last_task_id}_{answer}",
+                )
+            )
+    builder.row(
+        InlineKeyboardButton(text="Остановить урок", callback_data="stop_work_task"),
+    )
+    return builder.as_markup()

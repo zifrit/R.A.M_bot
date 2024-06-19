@@ -1,3 +1,4 @@
+import enum
 from contextlib import suppress
 
 from aiogram import Router, F
@@ -6,17 +7,32 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from base.db import session_factory
+from services.crud.lessons import get_in_progress_lesson
 from services.crud.tasks import (
     get_task_types,
     create_lessons_task,
     get_last_lessons_task,
     get_lessons_tasks,
+    get_first_in_progress_task,
+    get_in_progress_task,
 )
-from buttons.tasks import task_types_inline, completed_tasks_inline, back_lesson
+from buttons.tasks import (
+    task_types_inline,
+    completed_tasks_inline,
+    back_lesson,
+    task_answers_inline,
+    last_task_answers_inline,
+)
 from buttons.pagination import pagination, Pagination
-from states.lessons_task import CreateLessonTask
+from states.lessons_task import CreateLessonTask, WorkLessonTask
 
 router = Router()
+
+
+class ProgressTask(enum.Enum):
+    incomplete = "incomplete"
+    now = "now"
+    complete = "complete"
 
 
 @router.callback_query(F.data.startswith("add_task_to_lesson"))
@@ -258,3 +274,188 @@ async def paginator_tasks(
                         )
                     ),
                 )
+
+
+@router.callback_query(F.data.startswith("start_work_lesson_tasks_"))
+async def start_work_lesson_task(call: CallbackQuery, state: FSMContext):
+    id_lesson = int(call.data.split("_")[-1])
+    async with session_factory() as session:
+        task = await get_first_in_progress_task(
+            session=session, id_progress_lesson=id_lesson
+        )
+        task.progress = "now"
+        await session.commit()
+        if len(task.answer) > 1:
+            if task.next_task_id:
+                reply_markup = task_answers_inline(
+                    answers=task.answer, next_tasks_id=task.next_task_id
+                )
+            else:
+                reply_markup = last_task_answers_inline(
+                    answers=task.answer, last_task_id=task.id
+                )
+        else:
+            text = "Ответ напишите в чате"
+            if task.next_task_id:
+                reply_markup = task_answers_inline()
+                await state.update_data(next_tasks_id=task.next_task_id)
+                await state.set_state(WorkLessonTask.answer)
+            else:
+                reply_markup = last_task_answers_inline()
+                await state.set_state(WorkLessonTask.answer)
+                await state.update_data(now_tasks_id=task.id)
+        if task.img:
+            await call.message.delete()
+            await call.message.answer_photo(
+                photo=task.img,
+                caption=f"{task.question}",
+                reply_markup=reply_markup,
+            )
+        else:
+            await call.message.edit_text(
+                text=f"{task.question}",
+                reply_markup=reply_markup,
+            )
+        # if text:
+        #     await call.message.answer(text=text)
+
+
+@router.callback_query(F.data.startswith("next_tasks_"))
+async def next_working_lesson_task(call: CallbackQuery, state: FSMContext):
+    next_task_id = int(call.data.split("_")[-2])
+    choice_answer = call.data.split("_")[-1]
+    async with session_factory() as session:
+        task = await get_in_progress_task(session=session, id_task=next_task_id)
+        prev_task = await get_in_progress_task(
+            session=session, id_task=task.previous_task_id
+        )
+        prev_task.student_answer = choice_answer
+        prev_task.progress = "complete"
+        task.progress = "now"
+        await session.commit()
+
+        if len(task.answer) > 1:
+            print("больше одного")
+            if task.next_task_id:
+                reply_markup = task_answers_inline(
+                    answers=task.answer, next_tasks_id=task.next_task_id
+                )
+            else:
+                reply_markup = last_task_answers_inline(
+                    answers=task.answer, last_task_id=task.id
+                )
+        else:
+            print("меньше одного")
+            text = "Ответ напишите в чате"
+            if task.next_task_id:
+                reply_markup = task_answers_inline()
+                await state.update_data(next_tasks_id=task.next_task_id)
+                await state.set_state(WorkLessonTask.answer)
+            else:
+                reply_markup = last_task_answers_inline()
+                await state.update_data(now_tasks_id=task.id)
+                await state.set_state(WorkLessonTask.answer)
+        if task.img:
+            await call.message.delete()
+            await call.message.answer_photo(
+                photo=task.img,
+                caption=f"{task.question}",
+                reply_markup=reply_markup,
+            )
+        else:
+            await call.message.edit_text(
+                text=f"{task.question}",
+                reply_markup=reply_markup,
+            )
+        # if text:
+        #     await call.message.answer(text=text)
+
+
+@router.callback_query(F.data == "stop_work_task")
+async def stop_work_task(call: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await call.message.answer("Урок завершен")
+
+
+@router.callback_query(F.data.startswith("finish_work_lesson_"))
+async def next_working_lesson_task(call: CallbackQuery, state: FSMContext):
+    task_id = int(call.data.split("_")[-2])
+    choice_answer = call.data.split("_")[-1]
+    async with session_factory() as session:
+        task = await get_in_progress_task(session=session, id_task=task_id)
+        lesson = await get_in_progress_lesson(
+            session=session, id_lesson=task.in_progress_lessons_id
+        )
+        task.progress = "complete"
+        task.student_answer = choice_answer
+        lesson.completed = True
+        await state.clear()
+        await session.commit()
+        await call.message.edit_text("Вы завершили урок")
+
+
+@router.message(WorkLessonTask.answer)
+async def next_working_lesson_task(message: Message, state: FSMContext):
+    await state.update_data(answer=message.text)
+    data = await state.get_data()
+    print(data)
+    if data.get("next_tasks_id", False):
+        async with session_factory() as session:
+            task = await get_in_progress_task(
+                session=session, id_task=data["next_tasks_id"]
+            )
+            prev_task = await get_in_progress_task(
+                session=session, id_task=task.previous_task_id
+            )
+            prev_task.student_answer = data["answer"]
+            prev_task.progress = "complete"
+            task.progress = "now"
+            await session.commit()
+
+            if len(task.answer) > 1:
+                if task.next_task_id:
+                    reply_markup = task_answers_inline(
+                        answers=task.answer, next_tasks_id=task.next_task_id
+                    )
+                else:
+                    reply_markup = last_task_answers_inline(
+                        answers=task.answer, last_task_id=task.id
+                    )
+            else:
+                text = "Ответ напишите в чате"
+                if task.next_task_id:
+                    reply_markup = task_answers_inline()
+                    await state.update_data(next_tasks_id=task.next_task_id)
+                    await state.set_state(WorkLessonTask.answer)
+                else:
+                    reply_markup = last_task_answers_inline()
+                    await state.update_data(now_tasks_id=task.id)
+                    await state.set_state(WorkLessonTask.answer)
+            if task.img:
+                await message.delete()
+                await message.answer_photo(
+                    photo=task.img,
+                    caption=f"{task.question}",
+                    reply_markup=reply_markup,
+                )
+            else:
+                await message.edit_text(
+                    text=f"{task.question}",
+                    reply_markup=reply_markup,
+                )
+            if text:
+                await message.answer(text=text)
+    else:
+        async with session_factory() as session:
+            task = await get_in_progress_task(
+                session=session, id_task=data["now_tasks_id"]
+            )
+            lesson = await get_in_progress_lesson(
+                session=session, id_lesson=task.in_progress_lessons_id
+            )
+            task.student_answer = data["answer"]
+            task.progress = "complete"
+            lesson.completed = True
+            await session.commit()
+        await state.clear()
+        await message.answer("Вы завершили урок")

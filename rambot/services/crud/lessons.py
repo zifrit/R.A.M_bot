@@ -178,8 +178,16 @@ async def start_lesson(
         )
         session.add(next_lesson_progress_tasks)
         await session.commit()
-        prev_lesson_progress_tasks.nex_task_id = next_lesson_progress_tasks.id
+        prev_lesson_progress_tasks.next_task_id = next_lesson_progress_tasks.id
         await session.commit()
         prev_lesson_task = next_lesson_task
         prev_lesson_progress_tasks = next_lesson_progress_tasks
     return in_progress_lesson, True
+
+
+async def get_in_progress_lesson(
+    session: AsyncSession, id_lesson: int
+) -> InProgressLesson:
+    stmt = select(InProgressLesson).where(InProgressLesson.id == id_lesson)
+    lesson = await session.scalar(stmt)
+    return lesson

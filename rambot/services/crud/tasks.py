@@ -77,3 +77,26 @@ async def create_lessons_task(
         await session.flush()
     await session.commit()
     return task
+
+
+async def get_first_in_progress_task(
+    session: AsyncSession,
+    id_progress_lesson: int,
+) -> InProgressTasks:
+    task = await session.scalar(
+        select(InProgressTasks).where(
+            InProgressTasks.in_progress_lessons_id == id_progress_lesson,
+            InProgressTasks.previous_task_id == None,
+        )
+    )
+    return task
+
+
+async def get_in_progress_task(
+    session: AsyncSession,
+    id_task: int,
+) -> InProgressTasks:
+    task = await session.scalar(
+        select(InProgressTasks).where(InProgressTasks.id == id_task)
+    )
+    return task
