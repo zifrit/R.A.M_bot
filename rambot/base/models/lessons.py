@@ -40,7 +40,9 @@ class InProgressLesson(Base):
         back_populates="in_progress_lessons"
     )
     in_progress_tasks: Mapped[list["InProgressTasks"]] = relationship(
-        back_populates="in_progress_lessons"
+        back_populates="in_progress_lessons",
+        cascade="all, delete",
+        passive_deletes=True,
     )
 
 

@@ -168,9 +168,14 @@ async def info_lesson(message: Message, state: FSMContext):
                 f"Количество задач: {len(lesson.tasks)}\n"
                 f"Описание: {lesson.description}\n\n"
             )
+            have_tasks = True if len(lesson.tasks) > 0 else False
             await message.answer(
                 text=text,
-                reply_markup=lessons.info_lesson(id_lesson=id_lesson, search=True),
+                reply_markup=lessons.info_lesson(
+                    id_lesson=id_lesson,
+                    search=True,
+                    have_tasks=have_tasks,
+                ),
             )
         else:
             lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)

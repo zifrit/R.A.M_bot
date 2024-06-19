@@ -15,6 +15,7 @@ from services.crud.tasks import (
     get_lessons_tasks,
     get_first_in_progress_task,
     get_in_progress_task,
+    continue_lesson,
 )
 from buttons.tasks import (
     task_types_inline,
@@ -277,12 +278,17 @@ async def paginator_tasks(
 
 
 @router.callback_query(F.data.startswith("start_work_lesson_tasks_"))
+@router.callback_query(F.data.startswith("continue_work_lesson_tasks_"))
 async def start_work_lesson_task(call: CallbackQuery, state: FSMContext):
+    print(call.data)
     id_lesson = int(call.data.split("_")[-1])
     async with session_factory() as session:
-        task = await get_first_in_progress_task(
-            session=session, id_progress_lesson=id_lesson
-        )
+        if call.data.startswith("start_work_lesson_tasks_"):
+            task = await get_first_in_progress_task(
+                session=session, id_progress_lesson=id_lesson
+            )
+        elif call.data.startswith("continue_work_lesson_tasks_"):
+            task = await continue_lesson(session=session, id_progress_lesson=id_lesson)
         task.progress = "now"
         await session.commit()
         if len(task.answer) > 1:
@@ -374,7 +380,7 @@ async def next_working_lesson_task(call: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "stop_work_task")
 async def stop_work_task(call: CallbackQuery, state: FSMContext):
     await state.clear()
-    await call.message.answer("Урок завершен")
+    await call.message.edit_text("Урок завершен")
 
 
 @router.callback_query(F.data.startswith("finish_work_lesson_"))

@@ -100,3 +100,16 @@ async def get_in_progress_task(
         select(InProgressTasks).where(InProgressTasks.id == id_task)
     )
     return task
+
+
+async def continue_lesson(
+    session: AsyncSession,
+    id_progress_lesson: int,
+) -> InProgressTasks:
+    task = await session.scalar(
+        select(InProgressTasks).where(
+            id_progress_lesson == InProgressTasks.in_progress_lessons_id,
+            "now" == InProgressTasks.progress,
+        )
+    )
+    return task

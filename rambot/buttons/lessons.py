@@ -2,14 +2,15 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
-def info_lesson(id_lesson, search: bool = False):
+def info_lesson(id_lesson, search: bool = False, have_tasks: bool = False):
     builder = InlineKeyboardBuilder()
     if search:
-        builder.row(
-            InlineKeyboardButton(
-                text="Добавить к себе", callback_data=f"add_lesson_{id_lesson}"
+        if have_tasks:
+            builder.row(
+                InlineKeyboardButton(
+                    text="Добавить к себе", callback_data=f"add_lesson_{id_lesson}"
+                )
             )
-        )
         builder.row(
             InlineKeyboardButton(text="Повторить поиск", callback_data="search_lesson"),
         )
