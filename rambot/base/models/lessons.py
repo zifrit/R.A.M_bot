@@ -16,7 +16,11 @@ class Lesson(Base):
     description: Mapped[str | None] = mapped_column(String(255))
     teacher_id: Mapped[int] = mapped_column(ForeignKey("profiles_teacher.id"))
 
-    tasks: Mapped[list["Tasks"]] = relationship(back_populates="lessons")
+    tasks: Mapped[list["Tasks"]] = relationship(
+        back_populates="lessons",
+        cascade="all, delete",
+        passive_deletes=True,
+    )
     teacher: Mapped["ProfileTeacher"] = relationship(back_populates="lessons")
 
     def __str__(self):
