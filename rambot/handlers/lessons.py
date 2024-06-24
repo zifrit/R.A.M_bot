@@ -18,6 +18,10 @@ from services.crud.lessons import (
     get_teacher_lessons,
     get_lesson_by_id_full,
     start_lesson,
+    get_student_lessons,
+    get_in_progress_lesson_full,
+    delete_student_lesson_by_id,
+    get_count_complete_lesson,
 )
 from buttons import profiles, start, lessons, pagination
 from states.lessons_task import UpdateLessonName, CreateLesson, SearchLesson
@@ -67,7 +71,7 @@ async def get_create_lesson_name(message: Message, state: FSMContext):
         await state.clear()
 
 
-@router.callback_query(F.data.in_(["back_list_lessons", "view_my_lessons"]))
+@router.callback_query(F.data.in_(["back_list_lessons", "view_teacher_lessons"]))
 async def view_lessons_teacher(call: CallbackQuery):
     async with session_factory() as session:
         teacher = await get_teacher_by_tg_id(session=session, tg_id=call.from_user.id)
@@ -178,18 +182,21 @@ async def info_lesson(message: Message, state: FSMContext):
                 ),
             )
         else:
-            lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
+            lesson = await get_lesson_by_id_full(session=session, id_lesson=id_lesson)
             teacher = await get_teacher_by_tg_id(
                 session=session, tg_id=message.from_user.id
+            )
+            count_complete_lesson = await get_count_complete_lesson(
+                session=session, id_lesson=id_lesson
             )
             if lesson:
                 if lesson.teacher_id == teacher.id:
                     text = (
                         f"📝{lesson.name}\n\n"
                         f"{lesson.description}\n\n"
-                        f"Количество задач / \n"
-                        f"✍🏻Количество проходящих / \n"
-                        f"🥇Количество пройденных /"
+                        f"Количество задач: {len(lesson.tasks)}\n"
+                        f"✍🏻Количество проходящих {len(lesson.in_progress_lessons)} \n"
+                        f"🥇Количество пройденных {count_complete_lesson}"
                     )
                     await message.answer(
                         text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
@@ -410,3 +417,120 @@ async def start_taking_lesson(call: CallbackQuery):
                         id_lesson=in_progress_lesson.id
                     ),
                 )
+
+
+@router.callback_query(
+    F.data.in_(["back_list_student_lessons", "view_student_lessons"])
+)
+async def view_lessons_teacher(call: CallbackQuery):
+    async with session_factory() as session:
+        student = await get_student_by_tg_id(session=session, tg_id=call.from_user.id)
+        student_lessons, count_lessons = await get_student_lessons(
+            session=session, student_=student, limit=2
+        )
+        count_page = (
+            count_lessons // 2 + 1 if count_lessons % 2 != 0 else count_lessons // 2
+        )
+    if 0 < count_lessons <= 2:
+        text = []
+        for lesson in student_lessons:
+            text.append(f"""📝 {lesson.name}\n/info_student_lesson_{lesson.id}""")
+        await call.message.delete()
+        await call.message.answer(
+            text="\n\n".join(text), reply_markup=pagination.back_teacher_profile
+        )
+    elif count_lessons > 2:
+        text = []
+        for lesson in student_lessons:
+            text.append(f"""📝 {lesson.name}\n/info_student_lesson_{lesson.id}""")
+        await call.message.delete()
+        await call.message.answer(
+            text="\n\n".join(text),
+            reply_markup=pagination.pagination(
+                back_callback="profiled_student",
+                name_nex_action="next_page_student_lessons",
+                count_page=count_page,
+            ),
+        )
+    else:
+        await call.message.answer(text="Уроки еще не был созданы")
+
+
+@router.callback_query(
+    pagination.Pagination.filter(
+        F.action.in_(["prev_page_student_lessons", "next_page_student_lessons"])
+    )
+)
+async def paginator_service(call: CallbackQuery, callback_data: pagination.Pagination):
+    left = "prev_page_student_lessons"
+    right = "next_page_student_lessons"
+    if callback_data.action == "prev_page_student_lessons":
+        if callback_data.page > 1:
+            page = callback_data.page - 1
+            if page <= 1:
+                left = None
+                right = "next_page_student_lessons"
+        else:
+            page = callback_data.page
+            left = None
+            right = "next_page_student_lessons"
+    elif callback_data.action == "next_page_student_lessons":
+        if callback_data.page < callback_data.count_page:
+            page = callback_data.page + 1
+            if page >= callback_data.count_page:
+                left = "prev_page_student_lessons"
+                right = None
+        else:
+            page = callback_data.page
+            left = "prev_page_student_lessons"
+            right = None
+    async with session_factory() as session:
+        student = await get_student_by_tg_id(session=session, tg_id=call.from_user.id)
+        student_lessons, count_lessons = await get_student_lessons(
+            session=session, student_=student, limit=2, offset=page
+        )
+        count_page = (
+            count_lessons // 2 + 1 if count_lessons % 2 != 0 else count_lessons // 2
+        )
+    text = []
+    for lesson in student_lessons:
+        text.append(f"""📝 {lesson.name}\n/info_student_lesson_{lesson.id}""")
+    with suppress(TelegramBadRequest):
+        await call.message.edit_text(
+            reply_markup=pagination.pagination(
+                count_page=count_page,
+                page=page,
+                name_prev_action=left,
+                name_nex_action=right,
+                back_callback="profiled_student",
+            ),
+            text="\n\n".join(text),
+        )
+
+
+@router.message(F.text.startswith("/info_student_lesson_"))
+async def info_lesson(message: Message, state: FSMContext):
+    data = await state.get_data()
+    await state.clear()
+    id_lesson = int(message.text.split("_")[-1])
+    async with session_factory() as session:
+        lesson = await get_in_progress_lesson_full(session=session, id_lesson=id_lesson)
+        if lesson:
+            text = (
+                f"📝{lesson.name}\n\n"
+                f"{lesson.description}\n\n"
+                f"Количество задач {len(lesson.in_progress_tasks)}"
+            )
+            await message.answer(
+                text=text, reply_markup=lessons.info_student_lesson(id_lesson=id_lesson)
+            )
+        else:
+            await message.answer(text="Такого урока нет")
+
+
+@router.callback_query(F.data.startswith("delete_student_lesson_"))
+async def delete_lesson(call: CallbackQuery):
+    id_lesson = int(call.data.split("_")[-1])
+    async with session_factory() as session:
+        await delete_student_lesson_by_id(session=session, id_lesson=id_lesson)
+    await call.message.edit_text("Урок удален")

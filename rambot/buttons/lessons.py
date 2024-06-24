@@ -37,6 +37,18 @@ def info_lesson(id_lesson, search: bool = False, have_tasks: bool = False):
     return builder.as_markup()
 
 
+def info_student_lesson(id_lesson):
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="Удалить", callback_data=f"delete_student_lesson_{id_lesson}"
+        ),
+        InlineKeyboardButton(text="Назад", callback_data="back_list_student_lessons"),
+        width=1,
+    )
+    return builder.as_markup()
+
+
 def start_work_lesson(id_lesson: int):
     builder = InlineKeyboardBuilder()
     builder.row(
