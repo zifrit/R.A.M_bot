@@ -113,3 +113,16 @@ async def continue_lesson(
         )
     )
     return task
+
+
+async def get_count_completed_lessons_task(
+    session: AsyncSession, id_lesson: int
+) -> int:
+    count_completed_lessons_task = await session.execute(
+        select(func.count(InProgressTasks.id)).where(
+            InProgressTasks.in_progress_lessons_id == id_lesson,
+            InProgressTasks.student_answer != None,
+        )
+    )
+    count_completed_lessons_task = count_completed_lessons_task.scalar_one()
+    return count_completed_lessons_task

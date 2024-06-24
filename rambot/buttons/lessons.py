@@ -37,8 +37,24 @@ def info_lesson(id_lesson, search: bool = False, have_tasks: bool = False):
     return builder.as_markup()
 
 
-def info_student_lesson(id_lesson):
+def info_student_lesson(
+    id_lesson, complete_all_task: bool = False, start: bool = False
+):
     builder = InlineKeyboardBuilder()
+    if start:
+        builder.row(
+            InlineKeyboardButton(
+                text="Продолжить",
+                callback_data=f"start_work_lesson_tasks_{id_lesson}",
+            ),
+        )
+    elif not complete_all_task:
+        builder.row(
+            InlineKeyboardButton(
+                text="Продолжить",
+                callback_data=f"continue_work_lesson_tasks_{id_lesson}",
+            ),
+        )
     builder.row(
         InlineKeyboardButton(
             text="Удалить", callback_data=f"delete_student_lesson_{id_lesson}"

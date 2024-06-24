@@ -5,6 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from base.db import session_factory
+from services.crud.tasks import get_count_completed_lessons_task
 from services.crud.users import (
     get_teacher_by_tg_id,
     get_student_by_tg_id,
@@ -520,15 +521,35 @@ async def info_lesson(message: Message, state: FSMContext):
     id_lesson = int(message.text.split("_")[-1])
     async with session_factory() as session:
         lesson = await get_in_progress_lesson_full(session=session, id_lesson=id_lesson)
+        count_completed_lessons_task = await get_count_completed_lessons_task(
+            session=session, id_lesson=id_lesson
+        )
         if lesson:
             text = (
-                f"📝{lesson.name}\n\n"
+                f"®️{lesson.name}\n\n"
                 f"{lesson.description}\n\n"
-                f"Количество задач {len(lesson.in_progress_tasks)}"
+                f"📝Количество задач {len(lesson.in_progress_tasks)} \n"
+                f"✅Количество выполненных задач {count_completed_lessons_task}"
             )
-            await message.answer(
-                text=text, reply_markup=lessons.info_student_lesson(id_lesson=id_lesson)
-            )
+            if len(lesson.in_progress_tasks) > 0:
+                await message.answer(
+                    text=text,
+                    reply_markup=lessons.info_student_lesson(
+                        id_lesson=id_lesson,
+                        complete_all_task=(
+                            True
+                            if count_completed_lessons_task
+                            == len(lesson.in_progress_tasks)
+                            else False
+                        ),
+                        start=True if count_completed_lessons_task == 0 else False,
+                    ),
+                )
+            else:
+                await message.answer(
+                    text=text,
+                    reply_markup=lessons.info_student_lesson(id_lesson=id_lesson),
+                )
         else:
             await message.answer(text="Такого урока нет")
 
