@@ -21,6 +21,11 @@ class Lesson(Base):
         cascade="all, delete",
         passive_deletes=True,
     )
+    in_progress_lessons: Mapped[list["InProgressLesson"]] = relationship(
+        back_populates="parent_lesson",
+        cascade="all, delete",
+        passive_deletes=True,
+    )
     teacher: Mapped["ProfileTeacher"] = relationship(back_populates="lessons")
 
     def __str__(self):
@@ -30,6 +35,7 @@ class Lesson(Base):
 class InProgressLesson(Base):
     __tablename__ = "in_progress_lessons"
     name: Mapped[str] = mapped_column(String(255))
+    parent_lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id"))
     description: Mapped[str | None] = mapped_column(String(255))
     point: Mapped[int | None]  # оценка для урок
 
@@ -43,6 +49,7 @@ class InProgressLesson(Base):
     teacher: Mapped["ProfileTeacher"] = relationship(
         back_populates="in_progress_lessons"
     )
+    parent_lesson: Mapped["Lesson"] = relationship(back_populates="in_progress_lessons")
     in_progress_tasks: Mapped[list["InProgressTasks"]] = relationship(
         back_populates="in_progress_lessons",
         cascade="all, delete",
