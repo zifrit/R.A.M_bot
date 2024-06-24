@@ -216,11 +216,22 @@ async def get_count_complete_lesson(session: AsyncSession, id_lesson: int) -> in
     count_complete_lesson = await session.execute(
         select(func.count(InProgressLesson.id)).where(
             InProgressLesson.parent_lesson_id == id_lesson,
-            InProgressLesson.point != None,
+            InProgressLesson.completed == True,
         )
     )
     count_complete_lesson = count_complete_lesson.scalar_one()
     return count_complete_lesson
+
+
+async def get_verify_complete_lesson(session: AsyncSession, id_lesson: int) -> int:
+    verify_complete_lesson = await session.execute(
+        select(func.count(InProgressLesson.id)).where(
+            InProgressLesson.parent_lesson_id == id_lesson,
+            InProgressLesson.point != None,
+        )
+    )
+    verify_complete_lesson = verify_complete_lesson.scalar_one()
+    return verify_complete_lesson
 
 
 async def get_count_student_lessons(

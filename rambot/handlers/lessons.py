@@ -22,6 +22,7 @@ from services.crud.lessons import (
     get_in_progress_lesson_full,
     delete_student_lesson_by_id,
     get_count_complete_lesson,
+    get_verify_complete_lesson,
 )
 from buttons import profiles, start, lessons, pagination
 from states.lessons_task import UpdateLessonName, CreateLesson, SearchLesson
@@ -189,6 +190,9 @@ async def info_lesson(message: Message, state: FSMContext):
             count_complete_lesson = await get_count_complete_lesson(
                 session=session, id_lesson=id_lesson
             )
+            verify_complete_lesson = await get_verify_complete_lesson(
+                session=session, id_lesson=id_lesson
+            )
             if lesson:
                 if lesson.teacher_id == teacher.id:
                     text = (
@@ -196,6 +200,7 @@ async def info_lesson(message: Message, state: FSMContext):
                         f"{lesson.description}\n\n"
                         f"Количество задач: {len(lesson.tasks)}\n"
                         f"✍🏻Количество проходящих {len(lesson.in_progress_lessons)} \n"
+                        f"✅Количество проверенных {verify_complete_lesson} \n"
                         f"🥇Количество пройденных {count_complete_lesson}"
                     )
                     await message.answer(
