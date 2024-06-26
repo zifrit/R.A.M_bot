@@ -236,12 +236,19 @@ async def set_name_lesson(message: Message, state: FSMContext):
     async with session_factory() as session:
         await update_lesson(session=session, id_lesson=id_lesson, new_name=message.text)
         lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
+        count_complete_lesson = await get_count_complete_lesson(
+            session=session, id_lesson=id_lesson
+        )
+        verify_complete_lesson = await get_verify_complete_lesson(
+            session=session, id_lesson=id_lesson
+        )
         text = (
             f"📝{lesson.name}\n\n"
             f"{lesson.description}\n\n"
-            f"Количество задач / \n"
-            f"✍🏻Количество проходящих / \n"
-            f"🥇Количество пройденных /"
+            f"Количество задач: {len(lesson.tasks)}\n"
+            f"✍🏻Количество проходящих {len(lesson.in_progress_lessons)} \n"
+            f"✅Количество проверенных {verify_complete_lesson} \n"
+            f"🥇Количество пройденных {count_complete_lesson}"
         )
         await message.answer(
             text=text, reply_markup=lessons.info_lesson(id_lesson=id_lesson)
@@ -256,12 +263,19 @@ async def back_view_lesson(call: CallbackQuery, state: FSMContext):
     await state.clear()
     async with session_factory() as session:
         lesson = await get_lesson_by_id(session=session, id_lesson=id_lesson)
+        count_complete_lesson = await get_count_complete_lesson(
+            session=session, id_lesson=id_lesson
+        )
+        verify_complete_lesson = await get_verify_complete_lesson(
+            session=session, id_lesson=id_lesson
+        )
         text = (
             f"📝{lesson.name}\n\n"
             f"{lesson.description}\n\n"
-            f"Количество задач / \n"
-            f"✍🏻Количество проходящих / \n"
-            f"🥇Количество пройденных /"
+            f"Количество задач: {len(lesson.tasks)}\n"
+            f"✍🏻Количество проходящих {len(lesson.in_progress_lessons)} \n"
+            f"✅Количество проверенных {verify_complete_lesson} \n"
+            f"🥇Количество пройденных {count_complete_lesson}"
         )
         if call.message.photo:
             await call.message.delete()

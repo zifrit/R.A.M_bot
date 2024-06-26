@@ -24,6 +24,7 @@ from buttons.tasks import (
     task_answers_inline,
     last_task_answers_inline,
 )
+from services.crud.users import get_teacher_by_id
 from buttons.pagination import pagination, Pagination
 from states.lessons_task import CreateLessonTask, WorkLessonTask
 
@@ -280,7 +281,6 @@ async def paginator_tasks(
 @router.callback_query(F.data.startswith("start_work_lesson_tasks_"))
 @router.callback_query(F.data.startswith("continue_work_lesson_tasks_"))
 async def start_work_lesson_task(call: CallbackQuery, state: FSMContext):
-    print(call.data)
     id_lesson = int(call.data.split("_")[-1])
     async with session_factory() as session:
         if call.data.startswith("start_work_lesson_tasks_"):
@@ -322,8 +322,11 @@ async def start_work_lesson_task(call: CallbackQuery, state: FSMContext):
                 text=f"{task.question}",
                 reply_markup=reply_markup,
             )
-        # if text:
-        #     await call.message.answer(text=text)
+        try:
+            if text:
+                await call.message.answer(text=text)
+        except Exception:
+            pass
 
 
 @router.callback_query(F.data.startswith("next_tasks_"))
@@ -341,7 +344,6 @@ async def next_working_lesson_task(call: CallbackQuery, state: FSMContext):
         await session.commit()
 
         if len(task.answer) > 1:
-            print("больше одного")
             if task.next_task_id:
                 reply_markup = task_answers_inline(
                     answers=task.answer, next_tasks_id=task.next_task_id
@@ -351,7 +353,6 @@ async def next_working_lesson_task(call: CallbackQuery, state: FSMContext):
                     answers=task.answer, last_task_id=task.id
                 )
         else:
-            print("меньше одного")
             text = "Ответ напишите в чате"
             if task.next_task_id:
                 reply_markup = task_answers_inline()
@@ -373,8 +374,11 @@ async def next_working_lesson_task(call: CallbackQuery, state: FSMContext):
                 text=f"{task.question}",
                 reply_markup=reply_markup,
             )
-        # if text:
-        #     await call.message.answer(text=text)
+        try:
+            if text:
+                await call.message.answer(text=text)
+        except Exception:
+            pass
 
 
 @router.callback_query(F.data == "stop_work_task")
@@ -392,6 +396,12 @@ async def next_working_lesson_task(call: CallbackQuery, state: FSMContext):
         lesson = await get_in_progress_lesson(
             session=session, id_lesson=task.in_progress_lessons_id
         )
+        text = f"""
+Студент @{call.from_user.username} завершил ваш урок
+/verify_lesson_{lesson.id}
+        """
+        teacher = await get_teacher_by_id(session=session, id=lesson.teacher_id)
+        await call.bot.send_message(chat_id=teacher.user.tg_id, text=text)
         task.progress = "complete"
         task.student_answer = choice_answer
         lesson.completed = True
@@ -404,7 +414,6 @@ async def next_working_lesson_task(call: CallbackQuery, state: FSMContext):
 async def next_working_lesson_task(message: Message, state: FSMContext):
     await state.update_data(answer=message.text)
     data = await state.get_data()
-    print(data)
     if data.get("next_tasks_id", False):
         async with session_factory() as session:
             task = await get_in_progress_task(
@@ -459,6 +468,12 @@ async def next_working_lesson_task(message: Message, state: FSMContext):
             lesson = await get_in_progress_lesson(
                 session=session, id_lesson=task.in_progress_lessons_id
             )
+            text = f"""
+Студент @{message.from_user.username} завершил ваш урок
+/verify_lesson_{lesson.id}
+"""
+            teacher = await get_teacher_by_id(session=session, id=lesson.teacher_id)
+            await message.bot.send_message(chat_id=teacher.user.tg_id, text=text)
             task.student_answer = data["answer"]
             task.progress = "complete"
             lesson.completed = True

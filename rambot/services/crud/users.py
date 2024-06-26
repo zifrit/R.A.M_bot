@@ -79,6 +79,19 @@ async def get_teacher_by_tg_id(
     return teacher
 
 
+async def get_teacher_by_id(
+    session: AsyncSession,
+    id: int,
+) -> ProfileTeacher:
+    stmt = (
+        select(ProfileTeacher)
+        .options(joinedload(ProfileTeacher.user))
+        .where(ProfileTeacher.id == id)
+    )
+    teacher = await session.scalar(stmt)
+    return teacher
+
+
 async def get_student_by_tg_id(
     session: AsyncSession,
     tg_id: int,
