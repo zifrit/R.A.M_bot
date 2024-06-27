@@ -91,6 +91,24 @@ y_n_fio_student = InlineKeyboardMarkup(
 )
 
 
+back_to_teacher_profile = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Вернутся", callback_data="profiled_teacher"),
+        ],
+    ],
+)
+
+
+back_to_student_profile = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Вернутся", callback_data="profiled_student"),
+        ],
+    ],
+)
+
+
 def view_teacher_profile(callback_data):
     builder = InlineKeyboardBuilder()
     builder.row(

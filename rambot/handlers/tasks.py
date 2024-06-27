@@ -16,6 +16,8 @@ from services.crud.tasks import (
     get_first_in_progress_task,
     get_in_progress_task,
     continue_lesson,
+    get_verify_tasks,
+    get_first_not_verify_lessons_task,
 )
 from buttons.tasks import (
     task_types_inline,
@@ -23,10 +25,11 @@ from buttons.tasks import (
     back_lesson,
     task_answers_inline,
     last_task_answers_inline,
+    verify_tasks_inline,
 )
 from services.crud.users import get_teacher_by_id
 from buttons.pagination import pagination, Pagination
-from states.lessons_task import CreateLessonTask, WorkLessonTask
+from states.lessons_task import CreateLessonTask, WorkLessonTask, FinishLesson
 
 router = Router()
 
@@ -480,3 +483,124 @@ async def next_working_lesson_task(message: Message, state: FSMContext):
             await session.commit()
         await state.clear()
         await message.answer("Вы завершили урок")
+
+
+@router.callback_query(F.data.startswith("start_verify_lesson_"))
+async def start_verify_lesson(call: CallbackQuery):
+    id_lesson = int(call.data.split("_")[-1])
+    async with session_factory() as session:
+        task = await get_first_not_verify_lessons_task(
+            session=session, id_lesson=id_lesson
+        )
+        if task:
+            task.teacher_verify = True
+            await session.commit()
+            if task.next_task_id:
+                finish = False
+            else:
+                finish = True
+            if task.img:
+                await call.message.delete()
+                await call.message.answer_photo(
+                    photo=task.img,
+                    caption=f"{task.question}\n\n"
+                    f"Варианты ответов: {', '.join(task.answer)}\n"
+                    f"Правильный ответ: {task.right_answer}\n"
+                    f"Ответ ученика: {task.student_answer}",
+                    reply_markup=verify_tasks_inline(
+                        next_task_id=task.next_task_id,
+                        prev_task_id=task.previous_task_id,
+                        finish=finish,
+                        id_lesson=task.in_progress_lessons_id,
+                    ),
+                )
+            else:
+                await call.message.edit_text(
+                    text=f"{task.question}\n\n"
+                    f"Варианты ответов: {', '.join(task.answer)}\n"
+                    f"Правильный ответ: {task.right_answer}\n"
+                    f"Ответ ученика: {task.student_answer}",
+                    reply_markup=verify_tasks_inline(
+                        next_task_id=task.next_task_id,
+                        prev_task_id=task.previous_task_id,
+                        finish=finish,
+                        id_lesson=task.in_progress_lessons_id,
+                    ),
+                )
+        else:
+            await call.message.edit_text(
+                "Задач на проверку больше нету", reply_markup=back_lesson
+            )
+
+
+@router.callback_query(F.data.startswith("next_verify_task_"))
+@router.callback_query(F.data.startswith("prev_verify_task_"))
+async def start_verify_lesson(call: CallbackQuery):
+    id_task = int(call.data.split("_")[-1])
+    async with session_factory() as session:
+        task = await get_in_progress_task(session=session, id_task=id_task)
+        if task:
+            task.teacher_verify = True
+            await session.commit()
+            if task.next_task_id:
+                finish = False
+            else:
+                finish = True
+            if task.img:
+                await call.message.delete()
+                await call.message.answer_photo(
+                    photo=task.img,
+                    caption=f"{task.question}\n\n"
+                    f"Варианты ответов: {', '.join(task.answer)}\n"
+                    f"Правильный ответ: {task.right_answer}\n"
+                    f"Ответ ученика: {task.student_answer}",
+                    reply_markup=verify_tasks_inline(
+                        next_task_id=task.next_task_id,
+                        prev_task_id=task.previous_task_id,
+                        finish=finish,
+                        id_lesson=task.in_progress_lessons_id,
+                    ),
+                )
+            else:
+                await call.message.edit_text(
+                    text=f"{task.question}\n\n"
+                    f"Варианты ответов: {', '.join(task.answer)}\n"
+                    f"Правильный ответ: {task.right_answer}\n"
+                    f"Ответ ученика: {task.student_answer}",
+                    reply_markup=verify_tasks_inline(
+                        next_task_id=task.next_task_id,
+                        prev_task_id=task.previous_task_id,
+                        finish=finish,
+                        id_lesson=task.in_progress_lessons_id,
+                    ),
+                )
+        else:
+            await call.message.edit_text(
+                "Задач на проверку больше нету", reply_markup=back_lesson
+            )
+
+
+@router.callback_query(F.data.startswith("finish_verify_lesson_"))
+async def finish_verify_lesson(call: CallbackQuery, state: FSMContext):
+    id_lesson = int(call.data.split("_")[-1])
+    await state.update_data(id_lesson=id_lesson)
+    await state.set_state(FinishLesson.assessment)
+    await call.message.delete()
+    await call.message.answer("Какую оценку поставите данному студенту")
+
+
+@router.message(FinishLesson.assessment)
+async def assessment_finsh_lesson(message: Message, state: FSMContext):
+    try:
+        assessment = int(message.text)
+        data = await state.get_data()
+        await state.clear()
+        async with session_factory() as session:
+            lesson = await get_in_progress_lesson(
+                session=session, id_lesson=data["id_lesson"]
+            )
+            lesson.point = assessment
+            await session.commit()
+        await message.answer("Оценка выставлена")
+    except Exception as e:
+        await message.answer("Оценка можете быть только числом")

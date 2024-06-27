@@ -221,7 +221,9 @@ async def get_teacher_in_progress_lessons(
         select(InProgressLesson)
         .limit(limit)
         .offset(offset=(limit * (offset - 1)))
-        .where(InProgressLesson.teacher_id == teacher_id)
+        .where(
+            InProgressLesson.teacher_id == teacher_id, InProgressLesson.point == None
+        )
         .order_by(InProgressLesson.created_at)
     )
     lesson = await session.scalars(stmt)
@@ -290,7 +292,10 @@ async def get_student_lessons(
         select(InProgressLesson)
         .limit(limit)
         .offset(offset=(limit * (offset - 1)))
-        .where(InProgressLesson.student_id == student_.id)
+        .where(
+            InProgressLesson.student_id == student_.id,
+            InProgressLesson.completed == False,
+        )
         .order_by(InProgressLesson.created_at)
     )
     return list(student_lessons), await get_count_student_lessons(session, student_)

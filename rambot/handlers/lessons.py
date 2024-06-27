@@ -5,6 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from base.db import session_factory
+from buttons.profiles import back_to_teacher_profile, back_to_student_profile
 from services.crud.tasks import get_count_completed_lessons_task
 from services.crud.users import (
     get_teacher_by_tg_id,
@@ -90,7 +91,7 @@ async def view_lessons_teacher(call: CallbackQuery):
             text.append(f"""📝 {lesson.name}\n/info_lesson_{lesson.id}""")
         await call.message.delete()
         await call.message.answer(
-            text="\n\n".join(text), reply_markup=pagination.back_teacher_profile
+            text="\n\n".join(text), reply_markup=back_to_student_profile
         )
     elif count_lessons > 2:
         text = []
@@ -452,29 +453,33 @@ async def view_lessons_teacher(call: CallbackQuery):
         count_page = (
             count_lessons // 2 + 1 if count_lessons % 2 != 0 else count_lessons // 2
         )
-    if 0 < count_lessons <= 2:
-        text = []
-        for lesson in student_lessons:
-            text.append(f"""📝 {lesson.name}\n/info_student_lesson_{lesson.id}""")
-        await call.message.delete()
-        await call.message.answer(
-            text="\n\n".join(text), reply_markup=pagination.back_teacher_profile
-        )
-    elif count_lessons > 2:
-        text = []
-        for lesson in student_lessons:
-            text.append(f"""📝 {lesson.name}\n/info_student_lesson_{lesson.id}""")
-        await call.message.delete()
-        await call.message.answer(
-            text="\n\n".join(text),
-            reply_markup=pagination.pagination(
-                back_callback="profiled_student",
-                name_nex_action="next_page_student_lessons",
-                count_page=count_page,
-            ),
-        )
+    if student_lessons:
+        if 0 < count_lessons <= 2:
+            text = []
+            for lesson in student_lessons:
+                text.append(f"""📝 {lesson.name}\n/info_student_lesson_{lesson.id}""")
+            await call.message.delete()
+            await call.message.answer(
+                text="\n\n".join(text), reply_markup=back_to_student_profile
+            )
+        elif count_lessons > 2:
+            text = []
+            for lesson in student_lessons:
+                text.append(f"""📝 {lesson.name}\n/info_student_lesson_{lesson.id}""")
+            await call.message.delete()
+            await call.message.answer(
+                text="\n\n".join(text),
+                reply_markup=pagination.pagination(
+                    back_callback="profiled_student",
+                    name_nex_action="next_page_student_lessons",
+                    count_page=count_page,
+                ),
+            )
     else:
-        await call.message.answer(text="Уроки еще не был созданы")
+        await call.message.answer(
+            text="Уроков для прохождения закончились",
+            reply_markup=back_to_student_profile,
+        )
 
 
 @router.callback_query(
@@ -582,13 +587,20 @@ async def verify_lesson(message: Message):
     id_lesson = int(message.text.split("_")[-1])
     async with session_factory() as session:
         lesson = await get_in_progress_lesson_full(session=session, id_lesson=id_lesson)
-        text = f"""
-Название урока: {lesson.name}
-Прошел урок: {lesson.student.last_name} {lesson.student.first_name}
-        """
-    await message.answer(
-        text=text, reply_markup=lessons.verify_lesson_inline(id_lesson=id_lesson)
-    )
+        if lesson.point:
+            await message.answer(
+                text="Урок уже проверен",
+                reply_markup=back_to_teacher_profile,
+            )
+        else:
+            text = f"""
+    Название урока: {lesson.name}
+    Прошел урок: {lesson.student.last_name} {lesson.student.first_name}
+            """
+            await message.answer(
+                text=text,
+                reply_markup=lessons.verify_lesson_inline(id_lesson=id_lesson),
+            )
 
 
 @router.callback_query(
@@ -607,31 +619,33 @@ async def list_for_verify_lesson(call: CallbackQuery):
             if count_verify_lessons % 2 != 0
             else count_verify_lessons // 2
         )
-    if 0 < count_verify_lessons <= 2:
-        text = []
-        for lesson in teacher_verify_lessons:
-            text.append(f"""📝 {lesson.name}\n/verify_lesson_{lesson.id}""")
-        await call.message.delete()
-        await call.message.answer(
-            text="\n\n".join(text), reply_markup=pagination.back_teacher_profile
-        )
-    elif count_verify_lessons > 2:
-        text = []
-        for lesson in teacher_verify_lessons:
-            text.append(f"""📝 {lesson.name}\n/verify_lesson_{lesson.id}""")
-        await call.message.delete()
-        await call.message.answer(
-            text="\n\n".join(text),
-            reply_markup=pagination.pagination(
-                back_callback="profiled_teacher",
-                name_nex_action="next_page_progress_lessons",
-                count_page=count_page,
-            ),
-        )
+    if teacher_verify_lessons:
+        if 0 < count_verify_lessons <= 2:
+            text = []
+            for lesson in teacher_verify_lessons:
+                text.append(f"""📝 {lesson.name}\n/verify_lesson_{lesson.id}""")
+            await call.message.delete()
+            await call.message.answer(
+                text="\n\n".join(text), reply_markup=back_to_student_profile
+            )
+        elif count_verify_lessons > 2:
+            text = []
+            for lesson in teacher_verify_lessons:
+                text.append(f"""📝 {lesson.name}\n/verify_lesson_{lesson.id}""")
+            await call.message.delete()
+            await call.message.answer(
+                text="\n\n".join(text),
+                reply_markup=pagination.pagination(
+                    back_callback="profiled_teacher",
+                    name_nex_action="next_page_progress_lessons",
+                    count_page=count_page,
+                ),
+            )
     else:
+        await call.message.delete()
         await call.message.answer(
             text="Больше уроков для проверки нету",
-            reply_markup=pagination.back_teacher_profile,
+            reply_markup=back_to_student_profile,
         )
 
 

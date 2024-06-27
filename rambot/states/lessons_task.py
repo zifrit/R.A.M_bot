@@ -34,3 +34,8 @@ class WorkLessonTask(StatesGroup):
     answer = State()
     next_tasks_id = State()
     now_tasks_id = State()
+
+
+class FinishLesson(StatesGroup):
+    id_lesson = State()
+    assessment = State()

@@ -87,15 +87,6 @@ def pagination(
         return builder.as_markup()
 
 
-back_teacher_profile = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [
-            InlineKeyboardButton(text="Назад", callback_data="profiled_teacher"),
-        ],
-    ],
-)
-
-
 repeat_search_lesson = InlineKeyboardMarkup(
     inline_keyboard=[
         [
