@@ -96,6 +96,9 @@ def view_teacher_profile(callback_data):
     builder.row(
         # InlineKeyboardButton(text="Создать ключ", callback_data="create_join_token"),
         InlineKeyboardButton(text="Мои уроки", callback_data="view_teacher_lessons"),
+        InlineKeyboardButton(
+            text="Список для проверки уроков", callback_data="list_for_verify_lesson"
+        ),
         InlineKeyboardButton(text="Пересоздать профиль", callback_data=callback_data),
         width=1,
     )

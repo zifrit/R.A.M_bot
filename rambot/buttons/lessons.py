@@ -85,3 +85,16 @@ def continue_work_lesson(id_lesson: int):
         ),
     )
     return builder.as_markup()
+
+
+def verify_lesson_inline(id_lesson: int):
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="Начать проверку",
+            callback_data=f"start_verify_lesson_{id_lesson}",
+        ),
+        InlineKeyboardButton(text="Назад", callback_data="back_list_for_verify_lesson"),
+        width=1,
+    )
+    return builder.as_markup()

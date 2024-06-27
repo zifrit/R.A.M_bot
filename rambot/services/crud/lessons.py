@@ -198,6 +198,38 @@ async def get_in_progress_lesson(
     return lesson
 
 
+async def get_teacher_count_in_progress_lessons(
+    session: AsyncSession,
+    teacher_id: int,
+) -> int:
+    count_teacher_lessons = await session.execute(
+        select(func.count(InProgressLesson.id)).where(
+            InProgressLesson.teacher_id == teacher_id
+        )
+    )
+    count_teacher_lessons = count_teacher_lessons.scalar_one()
+    return count_teacher_lessons
+
+
+async def get_teacher_in_progress_lessons(
+    session: AsyncSession,
+    teacher_id: int,
+    limit: int = 5,  # page size
+    offset: int = 1,  # page number
+) -> tuple[list[InProgressLesson], int]:
+    stmt = (
+        select(InProgressLesson)
+        .limit(limit)
+        .offset(offset=(limit * (offset - 1)))
+        .where(InProgressLesson.teacher_id == teacher_id)
+        .order_by(InProgressLesson.created_at)
+    )
+    lesson = await session.scalars(stmt)
+    return list(lesson), await get_teacher_count_in_progress_lessons(
+        session, teacher_id
+    )
+
+
 async def get_in_progress_lesson_full(
     session: AsyncSession, id_lesson: int
 ) -> InProgressLesson:
@@ -205,6 +237,7 @@ async def get_in_progress_lesson_full(
         select(InProgressLesson)
         .options(
             joinedload(InProgressLesson.teacher),
+            joinedload(InProgressLesson.student),
             selectinload(InProgressLesson.in_progress_tasks),
         )
         .where(InProgressLesson.id == id_lesson)

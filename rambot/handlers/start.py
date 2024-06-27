@@ -108,3 +108,9 @@ async def profiled_teacher(call: CallbackQuery):
                 callback_data="re_register_teacher_profile"
             ),
         )
+
+
+@router.callback_query(F.data == "EXIT")
+async def EXIT(call: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await call.message.delete()
