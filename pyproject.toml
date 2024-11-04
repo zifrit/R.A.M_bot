@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "r-a-m"
+name = "r-a-m-bot"
 version = "0.1.0"
 description = ""
 authors = ["zifrit <zifrit@list.ru>"]
@@ -7,20 +7,16 @@ readme = "README.md"
 packages = [{include = "r"}]
 
 [tool.poetry.dependencies]
-python = "^3.11"
-aiogram = "^3.0.0"
-requests = "^2.31.0"
-python-dotenv = "^1.0.0"
-pydantic-settings = "^2.0.3"
-aiosqlite = "^0.20.0"
-alembic = "^1.13.1"
-sqlalchemy = {extras = ["asyncio"], version = "^2.0.30"}
-asyncpg = "^0.29.0"
-cryptography = "^42.0.7"
+python = "^3.12"
+aiogram = "^3.14.0"
+requests = "^2.32.3"
+python-dotenv = "^1.0.1"
+pydantic-settings = "^2.6.1"
+alembic = "^1.13.3"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.36"}
+asyncpg = "^0.30.0"
+cryptography = "^43.0.3"
 
-
-[tool.poetry.group.dev.dependencies]
-black = "^24.4.2"
 
 [build-system]
 requires = ["poetry-core"]
